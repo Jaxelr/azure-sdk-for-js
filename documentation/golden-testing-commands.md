@@ -14,10 +14,10 @@ If you're looking to be onboarded to the asset-sync workflow to push out the tes
 
 ## Commands - to run the tests inside the package directory
 
-| script name            | command(usually)                     |
+| script name             | command(usually)                     |
 |:-----------------------|:-------------------------------------|
-| `npm run test:browser` | `dev-tool run test:vitest --browser` |
-| `npm run test:node`    | `dev-tool run test:vitest`           |
+| `pnpm run test:browser` | `dev-tool run test:vitest --browser` |
+| `pnpm run test:node`    | `dev-tool run test:vitest`           |
 |                        |                                      |
 
 ## After migrating to asset-sync

@@ -15,7 +15,7 @@ Join the [JavaScript - Reviews](https://teams.microsoft.com/l/channel/19%3a408c5
 
 ## Prerequisites
 
-- [LTS versions of Node.js](https://nodejs.org/en/about/releases/)
+- [Node.js 22 or higher (LTS)](https://nodejs.org/en/about/releases/)
 - Install pnpm via the [pnpm installation instructions](https://pnpm.io/installation).
 - Install tsp-client dependencies with `npm --prefix eng/common/tsp-client ci`
 
@@ -88,7 +88,7 @@ The `package name` is used when publishing to [npmjs](https://www.npmjs.com/). I
     repo: Azure/azure-rest-api-specs
     ```
     
-    Run the `update` command from SDK directory (i.e sdk/agrifood/agrifood-farming) to re-generate the code:
+    Run the `update` command from SDK directory (i.e sdk/agrifood/agrifood-farming-rest) to re-generate the code:
 
     ```shell
     npm --prefix ../../../eng/common/tsp-client exec --no -- tsp-client update
