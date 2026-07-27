@@ -242,7 +242,7 @@ The following table compares `LROPoller` and `PollerLike`:
 | get the most recent response                                               | `getMostRecentResponse()`                    | can be accessed using the [`onResponse`](https://github.com/Azure/azure-sdk-for-js/blob/35f86a68def5022d4c03a32d4c8c0362a0158772/sdk/core/core-client/src/interfaces.ts#L115) callback in the operation options |
 | get the current operation status                                           | `getOperationStatus()`                       | can be accessed using the [`onResponse`](https://github.com/Azure/azure-sdk-for-js/blob/35f86a68def5022d4c03a32d4c8c0362a0158772/sdk/core/core-client/src/interfaces.ts#L115) callback in the operation options |
 
-And here are examples of how to commonly use one of the `beginCreateOrUpdateAndWait` LROs found in `@azure/compute`:
+And here are examples of how to commonly use one of the `beginCreateOrUpdateAndWait` LROs found in `@azure/arm-compute`:
 
 <!-- markdownlint-disable MD033 -->
 <table>
@@ -283,7 +283,7 @@ const poller = await computeClient.dedicatedHosts.beginCreateOrUpdate(
   parameter
 );
 poller.onProgress((state) => {
-  console.log(`Are we done yet? ${Boolean(state.isCompleted)});
+  console.log(`Are we done yet? ${Boolean(state.isCompleted)}`);
 })
 const result = await poller.pollUntilDone().then((response) => {
   console.log(response);
