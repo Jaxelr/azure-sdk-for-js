@@ -197,7 +197,7 @@ See the [JavaScript Codegen Quick Start for Test](https://github.com/Azure/azure
     npx dev-tool test-proxy push
     ```
 
-    After above command finished, you can find your local recording files in `./azure-sdk-for-js/.assets`.
+    After above command finished, you can find your local recording files in `.assets/`.
 
     And if you want to find your recording on `assets repo`, you can get the tag in `assets.json` in your package root, which is a tag pointing to your recordings in the [Azure/azure-sdk-assets](https://github.com/Azure/azure-sdk-assets) repo.
 

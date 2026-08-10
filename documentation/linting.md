@@ -1,33 +1,46 @@
-We use recommended rules from `eslint`, `typescript-eslint`, and a set of our custom rules to ensure our code adhere to the Azure SDK design guidelines and have high quality.
+# Linting in azure-sdk-for-js
 
-In this document, we describe how to address common linting issues for a package.
+This repository uses ESLint, `typescript-eslint`, and the custom `@azure/eslint-plugin-azure-sdk` ruleset to enforce Azure SDK conventions.
 
-# Azure SDK eslint plugin
+## Build the ESLint plugin
 
-Our custom linting rules and recommended configurations is hosted in the `@azure/eslint-plugin-azure-sdk` package. You MUST build it first before linting any SDK packages.
+The repo-local ESLint plugin must be available before linting SDK packages. After `pnpm install`, either build the plugin directly or build the package you care about and let Turbo build dependencies for you.
 
-- `pnpm install`
-- `pnpm turbo build --filter=@azure/eslint-plugin-azure-sdk...`
+```bash
+pnpm install
+pnpm turbo build --filter=@azure/eslint-plugin-azure-sdk... --token 1
+```
 
-It also gets built as a dependency of any SDK packages.
+## Lint a package
 
-# Linting a package
+From the package directory:
 
-This is done by running `pnpm lint` under the package directory.
+```bash
+cd sdk/<service-directory>/<package-directory>
+pnpm lint
+```
 
-1. `cd sdk/<service-directory>/<package-directory>` if your current directory is not the package directory yet.
-2. `pnpm lint`
+For `sdk/*` packages, `npx dev-tool check --fix` is often the fastest way to run the standard local checks and auto-fix what it can.
 
-# Fixing linting issues
+## Fix lint issues
 
-You should NEVER turn off a rule in `@azure/eslint-plugin-azure-sdk` to resolve linting issues.
+Never disable rules from `@azure/eslint-plugin-azure-sdk` with `eslint-disable` comments just to make lint pass. Fix the underlying issue instead.
 
-Some linting rules provide auto fixer. To use them, run `pnpm lint:fix` under the package directory.
+If a rule supports auto-fix, run:
 
-For linting issues that `lint:fix` script could not resolve, you will need to examine the code and fix the issues accordingly.
+```bash
+pnpm lint:fix
+```
 
-For documentation on `eslint` rules, refer to https://eslint.org/docs/latest/rules/.
+If `lint:fix` does not resolve the issue, inspect the source and correct it manually.
 
-For documentation on `typescript-eslint` rules, refer to https://typescript-eslint.io/rules/
+## Generated code
 
-For a generated package whose name starts with `@azure/arm-` or `@azure-rest/`, there might be "tsdoc/syntax" warnings because generated code files often contains some characters in reference docs that are not recommended in TSDoc. We should NEVER fix auto-generated files. You can add rules to suppress the "tsdoc/syntax" rules in the package's ESLint configuration file eslint.config.mjs. Create that file by using one from other packages as a template but do not copy rules that don't apply.
+Do not hand-edit files under `generated/`. For generator-produced packages, some warnings may originate from generated content. When suppression is truly necessary, update the package's ESLint configuration carefully rather than editing generated files.
+
+Generated packages whose names start with `@azure/arm-` or `@azure-rest/` may see `tsdoc/syntax` warnings from generated reference text. If that happens, adjust the package's `eslint.config.mjs` using an existing package as a template and only add the minimal suppression needed.
+
+## References
+
+- [ESLint rules documentation](https://eslint.org/docs/latest/rules/)
+- [typescript-eslint rules documentation](https://typescript-eslint.io/rules/)

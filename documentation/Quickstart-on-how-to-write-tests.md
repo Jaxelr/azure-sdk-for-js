@@ -1,227 +1,183 @@
-# Javascript Codegen Quick Start for Test
+# JavaScript codegen test quickstart
 
-This page is to help you write and run tests quickly for Javascript Codegen SDK including high-level and rest-level clients. We firstly show how to run in `record` and `playback` mode and then guide on how to add test cases.
+This guide explains how to write, run, and record tests for generated JavaScript/TypeScript SDKs in this repository, including high-level clients (HLCs), modular clients (DPG), and rest-level clients (RLCs).
 
-# Table of contents
+## Table of contents
 
-- [Javascript Codegen Quick Start for Test](#javascript-codegen-quick-start-for-test)
-- [Table of contents](#table-of-contents)
 - [Background](#background)
 - [Prerequisites](#prerequisites)
-- [How to run test](#how-to-run-test)
+- [How to run tests](#how-to-run-tests)
   - [Code structure](#code-structure)
   - [Run tests in record mode](#run-tests-in-record-mode)
   - [Run tests in playback mode](#run-tests-in-playback-mode)
-  - [How to push test recordings to assets repo](#how-to-push-test-recordings-to-assets-repo)
-    - [Push test recording](#push-test-recording)
-      - [New Package - No recorded tests](#new-package---no-recorded-tests)
-      - [Existing package - Tests have been pushed before](#existing-package---tests-have-been-pushed-before)
-    - [How to find recording files](#how-to-find-recording-files)
-      - [Find local recording files](#find-local-recording-files)
-      - [Find recording files in assets repo](#find-recording-files-in-assets-repo)
+  - [Run tests in live mode](#run-tests-in-live-mode)
+  - [How to push test recordings to the assets repo](#how-to-push-test-recordings-to-the-assets-repo)
+  - [How to find recording files](#how-to-find-recording-files)
 - [How to add tests](#how-to-add-tests)
   - [Before adding tests](#before-adding-tests)
-    - [Client authentication](#client-authentication)
-      - [AzureAD OAuth2 Authentication](#azuread-oauth2-authentication)
-      - [API Key Authentication](#api-key-authentication)
-  - [Example 1: Basic RLC test interaction and recording for Azure data-plane service](#example-1-basic-rlc-test-interaction-and-recording-for-azure-data-plane-service)
-    - [`glossary.spec.ts`](#glossaryspects)
-    - [`utils/recordedClient.ts`](#utilsrecordedclientts)
-  - [Example 2: Basic HLC test interaction and recording for Azure management service](#example-2-basic-hlc-test-interaction-and-recording-for-azure-management-service)
-    - [`monitor.spec.ts`](#monitorspects)
+  - [Example 1: Basic RLC test interaction and recording for an Azure data-plane service](#example-1-basic-rlc-test-interaction-and-recording-for-an-azure-data-plane-service)
+  - [Example 2: Basic HLC test interaction and recording for an Azure management service](#example-2-basic-hlc-test-interaction-and-recording-for-an-azure-management-service)
 
-# Background
+## Background
 
-The Azure SDK test framework uses the [`test-recorder`](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/README.md) library, which in turn rests upon on a HTTP recording system ([testproxy](https://github.com/Azure/azure-sdk-tools/tree/main/tools/test-proxy)) that enables tests dependent on network interaction to be run offline.
+The Azure SDK test framework uses [`@azure-tools/test-recorder`](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/README.md), which relies on the language-agnostic [test proxy](https://github.com/Azure/azure-sdk-tools/tree/main/tools/test-proxy) so network-dependent tests can run offline in playback mode.
 
-Please note that this quickstart is based on version 4.x of the recorder tool (`@azure-tools/test-recorder`), which uses the language-agnostic [test proxy server](https://github.com/Azure/azure-sdk-tools/tree/main/tools/test-proxy) and the [asset-sync workflow](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/ASSET_SYNC_WORKFLOW.md).
+This repository currently uses recorder 4.x, which stores recordings externally by using the [asset-sync workflow](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/ASSET_SYNC_WORKFLOW.md).
 
-# Prerequisites
+## Prerequisites
 
-- pnpm
-  - Install/update pnpm globally via [pnpm installation instructions](https://pnpm.io/installation)
-- Any of [the LTS versions of Node.js](https://github.com/nodejs/release#release-schedule)
-- A C++ compiler toolchain and Python (for compiling machine-code modules)
-  - Refer [here](https://github.com/Azure/azure-sdk-for-js/blob/main/CONTRIBUTING.md#prerequisites) for more details
+- `pnpm` installed via the [pnpm installation instructions](https://pnpm.io/installation)
+- Node.js 22 or later for the repo, and Node.js 22.18+ if you will run `dev-tool`
+- A C++ compiler toolchain and Python for native modules
+  - See [CONTRIBUTING.md prerequisites](https://github.com/Azure/azure-sdk-for-js/blob/main/CONTRIBUTING.md#prerequisites)
+- PowerShell (`pwsh`) if you need to provision test resources or use helper scripts
+- `pnpm install` run at the repo root before building or testing
 
-To be able to leverage the asset-sync workflow
+You do not need to add `@azure/dev-tool` manually to generated packages in this repo. Workspace packages already consume the shared `dev-tool` commands through their package scripts.
 
-- Install [Powershell](https://github.com/PowerShell/PowerShell)
-  - Make sure "pwsh" command works at this step (If you follow the above link, "pwsh" is typically added to the system environment variables by default)
-- Add `dev-tool` to the `devDependencies` in the `package.json`.
+## How to run tests
 
-# How to run test
+Most package test scripts are defined in the package's `package.json`. For a specific project, go to that project's folder and run `pnpm test`.
 
-This section describes how to run the SDK tests. If you want to run the tests of a specific project, go to that project's folder and execute `pnpm test`. All of the tests will automatically run both in NodeJS and in the browser. To target these environments individually, you can run `pnpm test:node` and `pnpm test:browser`. Let's take `purview-datamap-rest` as an example.
+In most `sdk/*` packages:
 
-To select a subset of test files and/or test cases:
+- `pnpm test` runs both Node and browser test targets when both are supported.
+- `pnpm test:node` usually runs `dev-tool run test:vitest`.
+- `pnpm test:browser` runs browser-targeted tests when configured.
+
+To select a subset of tests, pass extra arguments through the package script:
 
 ```shell
 pnpm run test:node -- test/myTest.spec.ts -t "should handle basic operations"
 ```
 
-Some shells (e.g. PowerShell) process command-line options differently and require double `--`:
+Some shells, especially PowerShell, require a double `--`:
 
 ```shell
 pnpm run test:node -- -- test/myTest.spec.ts -t "should handle basic operations"
 ```
 
-If you have no concepts of `recording`, `playback` or [TEST_MODE](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/README.md#test_mode) we'll highly recommend you to read this [doc](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/README.md#key-concepts). We'll touch upon these concepts in below content.
+If you are new to recordings, playback, or `TEST_MODE`, review the [recorder key concepts](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/README.md#key-concepts) first.
 
-## Code structure
+### Code structure
 
-If this is your first time generating an SDK, you can enable the config `generate-test: true` in `README.md` or `tspconfig.yaml`. For management plane packages, `generate-test` is always enabled. Then we'll generate simple utils and a sample test file for you.
+If this is your first time generating an SDK, you can enable `generate-test: true` in `README.md` or `tspconfig.yaml`. For management-plane packages, test scaffolding is generated by default.
 
-```
-  // Copyright (c) Microsoft Corporation.
-  // Licensed under the MIT License.
+A generated starter test often looks like this:
 
-  // import type { Recorder } from "@azure-tools/test-recorder";
-  // import { createRecorder } from "./utils/recordedClient.js";
-  import {
-    assert,
-    // beforeEach,
-    // afterEach,
-    it,
-    describe,
-  } from "vitest";
+```ts
+import { assert, describe, it } from "vitest";
 
-  describe("My test", () => {
-    // let recorder: Recorder;
-
-    // beforeEach(async function (ctx) {
-    //   recorder = await createRecorder(ctx);
-    // });
-
-    // afterEach(async function () {
-    //   await recorder.stop();
-    // });
-
-    it("sample test", async function () {
-      assert.equal(1, 1);
-    });
+describe("My test", () => {
+  it("sample test", async () => {
+    assert.equal(1, 1);
   });
+});
 ```
 
-This only contains basics for testing, we comment out some lines **except** license header. If you want to update to your own utility and test cases. The overall structure will be similar to below:
+Once you add recorder support, the structure typically looks like this:
 
-_Note: the structure of the `test` folder has slight differences between high-level, rest-level and Modular clients. In HLC, we only have one file under the `test` folder which contains all contents. But in RLC and Modular, we separate the sample test and utils._
-
-```
+```text
 sdk/
-├─ purview/
-│  ├─ purview-datamap-rest/
-│  │  ├─ src/
-│  │  │  ├─ ...
-│  │  ├─ test/
-│  │  │  ├─ public/
-│  │  │  |  ├─ utils/
-│  │  │  |  |  ├─ recordedClient.ts
-│  │  │  |  ├─ sampleTest.spec.ts
+└─ <service>/
+   └─ <package>/
+      ├─ src/
+      └─ test/
+         └─ public/
+            ├─ utils/
+            │  └─ recordedClient.ts
+            └─ sampleTest.spec.ts
 ```
 
-You could also refer [here](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#how-to-write-test-for-dpgrlcmpg) to add your test cases.
+The exact layout differs by package type. HLC packages often keep more setup inline, while RLC and modular packages usually split helpers into `test/public/utils/recordedClient.ts`.
 
-After writing your test cases you need to run your test cases and record the test recordings. See [here](#run-tests-in-record-mode)
+You can also refer to [steps after generation](./steps-after-generations.md#how-to-write-tests-for-dpgrlcmpg) for the surrounding post-generation workflow.
 
-## Run tests in record mode
+### Run tests in record mode
 
-Before running tests, it's advised to update the dependencies and build our project by running the command `pnpm install && pnpm turbo build --filter=<package-name>...`. Please notice this command is time-consuming and it will take around 10 mins, you could refer [here](https://github.com/Azure/azure-sdk-for-js/blob/main/CONTRIBUTING.md#resolving-dependency-version-conflicts) for more details.
+Before running tests, install dependencies at the repo root and build the package and its local dependencies from the repo root:
 
-```Shell
-> pnpm install
-> pnpm turbo build --filter=@azure-rest/purview-datamap...
+```shell
+pnpm install
+pnpm turbo build --filter=@azure-rest/purview-datamap... --token 1
 ```
 
-Then, we could go to the project folder to run the tests. By default, if you don't specify `TEST_MODE`, it will run previously recorded tests.
+Then move to the package folder and run the tests:
 
-```Shell
-> cd sdk/purview/purview-datamap-rest
-sdk/purview/purview-datamap-rest> pnpm test
+```shell
+cd sdk/purview/purview-datamap-rest
+pnpm test
 ```
 
-If you are the first time to run tests you may fail with below message because there is no any recordings found.
+If a package expects recordings and none exist yet, the default run may fail. To create or refresh recordings, set `TEST_MODE=record` and rerun the tests:
 
-```
-[test-info] ===TEST_MODE=undefined===
-...
-[node-tests]   2 failing
-[node-tests]
-[node-tests]   1) My test
-[node-tests]        "before each" hook for "sample test":
-[node-tests]      RecorderError: Start request failed.
-```
+```shell
+# Windows CMD
+set TEST_MODE=record
+pnpm test
 
-To record or update our recordings, we need to set the environment variable `TEST_MODE` to `record`. Then, run `pnpm test`.
+# Windows PowerShell
+$env:TEST_MODE="record"
+pnpm test
 
-After running the test cases, you need to push your recordings into assets repo. See [here](#how-to-push-test-recordings-to-assets-repo)
-
-```Shell
-# Windows with CMD
-> set TEST_MODE=record
-> pnpm test
-
-# Windows with PowerShell
-> $env:TEST_MODE="record"
-> pnpm test
-
-# Linux / Mac
-> export TEST_MODE=record
-> pnpm test
+# Linux / macOS
+export TEST_MODE=record
+pnpm test
 ```
 
-This time we could get following similar logs. After pushing, recording files will be stored in the [azure-sdk-assets](https://github.com/Azure/azure-sdk-assets) repo and referenced via your `assets.json`.
+After a successful record run, push the updated recordings to the assets repo as described in [How to push test recordings to the assets repo](#how-to-push-test-recordings-to-the-assets-repo).
 
-```
-[test-info] ===TEST_MODE="record"===
-...
-[node-tests]   My test
-[node-tests]     √ sample test
-[node-tests]
-[node-tests]   1 passing (223ms)
-```
+### Run tests in playback mode
 
-## Run tests in playback mode
+Playback mode uses previously recorded HTTP interactions and should not call the live service.
 
-If we have existing recordings, then the tests have been run against generated the HTTP recordings, we can run your tests in `playback` mode.
+```shell
+# Windows CMD
+set TEST_MODE=playback
+pnpm test
 
-```Shell
-# Windows with CMD
-> set TEST_MODE=playback
-> pnpm test
+# Windows PowerShell
+$env:TEST_MODE="playback"
+pnpm test
 
-# Windows with PowerShell
-> $env:TEST_MODE="playback"
-> pnpm test
-
-# Linux / Mac
-> export TEST_MODE=playback
-> pnpm test
+# Linux / macOS
+export TEST_MODE=playback
+pnpm test
 ```
 
-## How to push test recordings to assets repo
+### Run tests in live mode
 
-We need to push test recording files to [asset repo](https://github.com/Azure/azure-sdk-assets) after testing your test cases.
+Live mode talks to Azure directly and requires real test resources and environment variables.
 
-`Notice`: Before pushing your recording file, you must confirm that you are able to push recordings to the `azure-sdk-assets` repo, you need write-access to the assets repo. [Permissions to `Azure/azure-sdk-assets`](https://dev.azure.com/azure-sdk/internal/_wiki/wikis/internal.wiki/785/Externalizing-Recordings-(Asset-Sync)?anchor=permissions-to-%60azure/azure-sdk-assets%60)
+```shell
+# Windows CMD
+set TEST_MODE=live
+pnpm test
 
-### Push test recording
+# Windows PowerShell
+$env:TEST_MODE="live"
+pnpm test
 
-#### New Package - No recorded tests
+# Linux / macOS
+export TEST_MODE=live
+pnpm test
+```
 
-This section assumes that your package is new to the JS repo and that you're trying to onboard your tests with recorder, and the asset-sync workflow.
+### How to push test recordings to the assets repo
 
-Generate an `sdk/<service-folder>/<package-name>/assets.json` file by running the following command.
+Recordings are stored in [Azure/azure-sdk-assets](https://github.com/Azure/azure-sdk-assets). After changing tests or generated HTTP traffic, push the new recordings before opening or updating your PR.
+
+> Before pushing recordings, make sure you have permission to push to `Azure/azure-sdk-assets`.
+
+#### New package: no recorded tests yet
+
+Initialize `assets.json` in the package root:
 
 ```bash
 npx dev-tool test-proxy init
 ```
 
-Note: If you [install `dev-tool` globally](https://github.com/Azure/azure-sdk-for-js/tree/main/common/tools/dev-tool#installation), you don't need `npx` prefix in the above command
-
-This command would generate an `assets.json` file with an empty tag.
-
-Example `assets.json` with an empty tag:
+That creates `sdk/<service-folder>/<package-name>/assets.json` with an empty tag, for example:
 
 ```json
 {
@@ -232,44 +188,36 @@ Example `assets.json` with an empty tag:
 }
 ```
 
-After `init` the `assets.json` file, [run your test with record mode](#run-tests-in-record-mode)
+Then run your tests in record mode so there are local changes to push.
 
-`Notice`: If you have already run tests in record mode before, you need to re-run the tests again to make sure that your records can be pushed later.
+#### Existing package: recordings already onboarded
 
-Then, go to the next step to [Existing package - Tests have been pushed before](#existing-package---tests-have-been-pushed-before).
-
-#### Existing package - Tests have been pushed before
-
-At this point, you should have an `assets.json` file under your SDK. `sdk/<service-folder>/<package-name>/assets.json`.
-
-With asset sync enabled, there is one extra step that must be taken before you create a PR with changes to recorded tests: you must push the new recordings to the assets repo. This is done with the following command:
-
-`Notice`: the tests have to be recorded using the `TEST_MODE=record` environment variable in order for the recording files to be generated, then you can push them to `assets repo`
+If `assets.json` already exists, record your tests with `TEST_MODE=record` and then run:
 
 ```bash
 npx dev-tool test-proxy push
 ```
 
-This command will:
+This command:
 
-1. Push your local recordings to a tag in the `Azure/azure-sdk-assets` repo, and
-1. Update the `assets.json` in your package root to reference the newly created tag.
+1. Pushes the local recording changes to a tag in `Azure/azure-sdk-assets`
+2. Updates the package's `assets.json` to reference the new tag
 
-You should stage and commit the `assets.json` update as part of your PR. If you don't run the `push` command before creating a PR, the CI (and anyone else who tries to run your recorded tests) will use the old recordings, which will cause failures.
+Commit the updated `assets.json` along with your package changes.
 
 ### How to find recording files
 
 #### Find local recording files
 
-You can find your recording files in `./azure-sdk-for-js/.assets`
+Asset-sync stores recordings in the repo-local `.assets/` directory.
 
-If you want to search your recording quickly, you can open `.breadcrumb` file and search your package in which folder.
+The `.assets/.breadcrumb` file helps map a package to the corresponding asset folder.
 
-#### Find recording files in assets repo
+#### Find recording files in the assets repo
 
-You can get the tag in `assets.json` in your package root, which is a tag `pointing` to your recordings in the `Azure/azure-sdk-assets` repo.
+The `Tag` field in `assets.json` points to the recordings in `Azure/azure-sdk-assets`.
 
-Example `assets.json` from `arm-network` SDK:
+Example:
 
 ```json
 {
@@ -280,54 +228,41 @@ Example `assets.json` from `arm-network` SDK:
 }
 ```
 
-The recordings are located at https://github.com/Azure/azure-sdk-assets/tree/js/network/arm-network_bec01aa795.
+Those recordings are located at:
+`https://github.com/Azure/azure-sdk-assets/tree/js/network/arm-network_bec01aa795`
 
-# How to add tests
+## How to add tests
 
-Adding runnable tests requires both a good understanding of the service, and the knowledge of the client and test framework. Feel free to contact SDK developers, if you encountered issues on client or test framework.
+Adding runnable tests requires both service knowledge and familiarity with the generated client plus the recorder/test framework.
 
-## Before adding tests
+### Before adding tests
 
-### Client authentication
+#### Client authentication
 
-There are several ways to authenticate to Azure and most common ways are AzureAD OAuth2 authentication and API key authentication. Before adding tests, you are expected to know what your services support and ensure you or service principal have rights to perform actions in test.
+Most services use either Microsoft Entra ID (Azure AD) credentials or API keys.
 
-#### AzureAD OAuth2 Authentication
+##### Microsoft Entra ID / OAuth2 authentication
 
-If your service uses AzureAD OAuth2 token for authentication, a common solution is to provide [an application and its service principal](https://learn.microsoft.com/azure/active-directory/develop/app-objects-and-service-principals) and to provide RBAC to the service principal for the access to the Azure resource of your service.
+For AAD-based services, tests usually rely on these environment variables:
 
-Client requires following three variables for the service principal using client ID/secret for authentication:
-
-```
+```text
 AZURE_TENANT_ID
 AZURE_CLIENT_ID
 AZURE_CLIENT_SECRET
 ```
 
-The recommended practice is to store these three values in environment variables called `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_CLIENT_SECRET`. To set an environment variable, use the following commands:
+Use `createTestCredential` so the recorder can properly capture authentication traffic for playback:
 
-```Shell
-# Windows
-> set AZURE_TENANT_ID=<value>
-
-# Linux / Mac
-> export AZURE_TENANT_ID=<value>
-```
-
-To ensure our recorder could record OAuth traffic, we have to leverage the `createTestCredential` helper to prepare test credential. So, please follow below code snippet to create your client.
-
-```typescript
+```ts
 import { createTestCredential } from "@azure-tools/test-credential";
 
 const credential = createTestCredential();
-
-// Create your client using the test credential.
-new MyServiceClient(<endpoint>, credential);
+new MyServiceClient(endpoint, credential);
 ```
 
-To avoid storing the sensitive info in the recordings like authenticating with your Azure endpoints, keys, secrets, etc, we use the sanitizers to mask the values with the fake ones or remove them, `RecorderStartOptions` helps us here. In our generated sample file, we have below sanitizers' code:
+To prevent secrets from leaking into recordings, configure playback values in `RecorderStartOptions`:
 
-```typescript
+```ts
 const envSetupForPlayback: Record<string, string> = {
   ENDPOINT: "https://endpoint",
   AZURE_CLIENT_ID: "azure_client_id",
@@ -339,48 +274,33 @@ const envSetupForPlayback: Record<string, string> = {
 const recorderEnvSetup: RecorderStartOptions = {
   envSetupForPlayback,
 };
-
-//...
-await recorder.start(recorderEnvSetup);
 ```
 
-#### API Key Authentication
+##### API key authentication
 
-API key authentication would hit the service's endpoint directly so these traffic will be recorded. It doesn't require any customization in tests. However, we must secure the sensitive data and not leak into our recordings, so add a sanitizer to replace your API keys. You could read more on how to add sanitizer at [here](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/README.md).
+API key requests are recorded directly. Add sanitizers so the key never appears in recordings. See the [recorder README](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/README.md) for sanitizer details.
 
-## Example 1: Basic RLC test interaction and recording for Azure data-plane service
+### Example 1: Basic RLC test interaction and recording for an Azure data-plane service
 
-At the code structure [section](#code-structure), we described we'll generate sample file for you. If you are the first time to write test cases, you could grow up your own based on them.
+The following example uses `purview-datamap-rest` style patterns.
 
-This simple test creates a resource and checks that the service handles it correctly in the project `purview-datamap-rest`. Below are the steps:
+#### `glossary.spec.ts`
 
-- Step 1: Create your test file and add one test case with resource creation, here we have purview datamap glossary test file `glossary.spec.ts` and one case named `Should create a glossary`. Or rename the `sampleTest.spec.ts` file and its case `sample test`.
-- Step 2: Add the utility method `createClient` in `public/utils/recordedClient.ts` to share the `PurviewDataMapClient` creation.
-  - Call `createTestCredential` to init your credential and refer [here](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/README.md#azure-toolstest-credential-package-and-the-noopcredential) for more details.
-  - Wrap the `option` with test options by calling `recorder.configureClientOptions(options)`.
-- Step 3: In `glossary.spec.ts` file, call `createClient` to prepare the client and call `client.path("/atlas/v2/glossary").post()` to create our glossary resource under our case `Should create a glossary`.
-- Step 4: Specify environment variables that would be faked in the recordings in map `envSetupForPlayback` under the file `public/utils/recordedClient.ts`.
-- Step 5: In `glossary.spec.ts` file, add necessary assertions in your test case.
-- Step 6: Run and record your test cases.
-
-### `glossary.spec.ts`
-
-```typescript
+```ts
 import { Recorder } from "@azure-tools/test-recorder";
-import { describe, it, assert, beforeEach, afterEach } from "vitest";
+import { afterEach, assert, beforeEach, describe, it } from "vitest";
 import type { PurviewDataMapClient } from "../../src/index.js";
+import { isUnexpected } from "../../src/index.js";
 import { createClient, createRecorder } from "./utils/recordedClient.js";
 
 describe("My test", () => {
   let recorder: Recorder;
-  // Step 3: Declare your own variables
   let client: PurviewDataMapClient;
   let glossaryName: string;
 
   beforeEach(async (ctx) => {
     recorder = await createRecorder(ctx);
-    // Step 3: Create your client
-    client = await createClient(recorder);
+    client = createClient(recorder);
     glossaryName = "js-testing";
   });
 
@@ -388,9 +308,7 @@ describe("My test", () => {
     await recorder.stop();
   });
 
-  // Step 1: Create your test case
-  it("Should create a glossary", async () => {
-    // Step 3: Add your test cases
+  it("should create a glossary", async () => {
     const glossaryResponse = await client.path("/atlas/v2/glossary").post({
       body: {
         name: glossaryName,
@@ -400,31 +318,31 @@ describe("My test", () => {
         usage: "Example Glossary",
       },
     });
+
     if (isUnexpected(glossaryResponse)) {
-      throw new Error(glossaryResponse.body?.error.message);
+      throw new Error(glossaryResponse.body.error?.message ?? "Request failed");
     }
-    // Step 5: Add your assertions
+
     assert.strictEqual(glossaryResponse.status, "200");
   });
 });
 ```
 
-### `utils/recordedClient.ts`
+#### `utils/recordedClient.ts`
 
-```typescript
-import type { TestInfo } from "@azure-tools/test-recorder";
-import { Recorder, RecorderStartOptions } from "@azure-tools/test-recorder";
-import PurviewDataMap, { PurviewDataMapClient } from "../../../src/index.js";
+```ts
 import { createTestCredential } from "@azure-tools/test-credential";
+import type { TestInfo } from "@azure-tools/test-recorder";
+import { Recorder, type RecorderStartOptions } from "@azure-tools/test-recorder";
 import type { ClientOptions } from "@azure-rest/core-client";
+import PurviewDataMap, { type PurviewDataMapClient } from "../../../src/index.js";
 
 const envSetupForPlayback: Record<string, string> = {
   ENDPOINT: "https://endpoint",
   AZURE_CLIENT_ID: "azure_client_id",
   AZURE_CLIENT_SECRET: "azure_client_secret",
   AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888",
-  SUBSCRIPTION_ID: "azure_subscription_id",
-  // Step 4: Add environment variables you'd like to mask the values in recordings
+  AZURE_SUBSCRIPTION_ID: "azure_subscription_id",
   PURVIEW_DATAMAP_GLOSSARY_ENV: "glossary_custom_env",
 };
 
@@ -432,113 +350,77 @@ const recorderEnvSetup: RecorderStartOptions = {
   envSetupForPlayback,
 };
 
-/**
- * Should be called first in the test suite to make sure environment variables are
- * read before they are being used.
- */
 export async function createRecorder(context: TestInfo): Promise<Recorder> {
   const recorder = new Recorder(context);
   await recorder.start(recorderEnvSetup);
   return recorder;
 }
 
-// Step 2: Add your client creation factory
-export function createClient(recorder: Recorder, options?: ClientOptions): PurviewDataMapClient {
-  // Use createTestCredential to record AAD traffic so it could work in playback mode
+export function createClient(recorder: Recorder, options: ClientOptions = {}): PurviewDataMapClient {
   const credential = createTestCredential();
-  // Use recorder.configureClientOptions to add the recording policy in the client options
-  const client = PurviewDataMap("<endpoint>", credential, recorder.configureClientOptions(options));
-  return client;
+  return PurviewDataMap("<endpoint>", credential, recorder.configureClientOptions(options));
 }
 ```
 
-## Example 2: Basic HLC test interaction and recording for Azure management service
+### Example 2: Basic HLC test interaction and recording for an Azure management service
 
-At the code structure [section](#code-structure), we described if your SDK is generated based on HLC, we'll generate a sample test named `sampleTest.ts` for you.
+The following example uses management client patterns similar to `@azure/arm-monitor`.
 
-Next, we'll take the package `@azure/arm-monitor` as an example to guide you how to add your own test case. Below are the steps:
+#### `monitor.spec.ts`
 
-- Step 1: Create your test file and add one test case with resource creation, here we have monitor test file `monitor.spec.ts` and one case named `Should create diagnosticSettings`. Or rename the `sampleTest.spec.ts` file and its case `sample test`.
-- Step 2: Add declarations for common variables e.g monitor client, its diagnostic name and subscription id.
-- Step 3: Create the monitor client in `beforeEach` and call `client.diagnosticSettings.createOrUpdate` in test case.
-  - Read the `subscriptionId` from `env`.
-  - Call `createTestCredential` to init your credential and refer [here](https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/test-utils/recorder/README.md#azure-toolstest-credential-package-and-the-noopcredential) for more details.
-  - Wrap the `option` with test options by calling `recorder.configureClientOptions(options)`.
-- Step 4[Optional]: Specify environment variables that would be faked in the recordings in map `envSetupForPlayback`.
-- Step 5: Add necessary assertions in your test case.
-- Step 6: Run and record your test cases.
-
-### `monitor.spec.ts`
-
-```typescript
-/*
- * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT License.
- *
- * Code generated by Microsoft (R) AutoRest Code Generator.
- * Changes may cause incorrect behavior and will be lost if the code is regenerated.
- */
-
-import { env, Recorder, RecorderStartOptions } from "@azure-tools/test-recorder";
+```ts
 import { createTestCredential } from "@azure-tools/test-credential";
-import { describe, it, assert, beforeEach, afterEach } from "vitest";
-import { MonitorClient } from "../src/monitorClient.js";
+import { Recorder, env, type RecorderStartOptions } from "@azure-tools/test-recorder";
+import { afterEach, assert, beforeEach, describe, it } from "vitest";
+import { MonitorManagementClient } from "../src/index.js";
 
-// Step 4: Add environment variables you'd like to mask the values in recordings
 const replaceableVariables: Record<string, string> = {
   AZURE_CLIENT_ID: "azure_client_id",
   AZURE_CLIENT_SECRET: "azure_client_secret",
   AZURE_TENANT_ID: "88888888-8888-8888-8888-888888888888",
-  SUBSCRIPTION_ID: "azure_subscription_id",
+  AZURE_SUBSCRIPTION_ID: "azure_subscription_id",
 };
 
 const recorderOptions: RecorderStartOptions = {
   envSetupForPlayback: replaceableVariables,
 };
 
-// Step 1: prepare the test file and test case
 describe("Monitor client", () => {
   let recorder: Recorder;
-  // Step 2: declare common variables
   let subscriptionId: string;
-  let client: MonitorClient;
+  let client: MonitorManagementClient;
   let diagnosticName: string;
 
   beforeEach(async (ctx) => {
     recorder = new Recorder(ctx);
     await recorder.start(recorderOptions);
-    // Step 3: create clients
-    subscriptionId = env.SUBSCRIPTION_ID || "";
-    const credential = createTestCredential();
-    client = new MonitorClient(credential, subscriptionId, recorder.configureClientOptions({}));
+    subscriptionId = env.AZURE_SUBSCRIPTION_ID ?? "";
+    client = new MonitorManagementClient(
+      createTestCredential(),
+      subscriptionId,
+      recorder.configureClientOptions({}),
+    );
     diagnosticName = "my-test-diagnostic-name";
   });
 
-  afterEach(async function () {
+  afterEach(async () => {
     await recorder.stop();
   });
 
-  it("should create diagnosticSettings", async function () {
-    // Step 3: call createOrUpdate to prepare resource
-    const res = await client.diagnosticSettings.createOrUpdate("workflowsId", diagnosticName, {
-      storageAccountId: "storageId",
-      workspaceId: "workspaceId",
-      eventHubAuthorizationRuleId: "authorizationId",
-      eventHubName: "eventhubName",
-      metrics: [],
-      logs: [
-        {
-          category: "WorkflowRuntime",
-          enabled: true,
-          retentionPolicy: {
-            enabled: false,
-            days: 0,
-          },
-        },
-      ],
-    });
-    // Step 5: Add assertions
-    assert.equal(res.name, diagnosticName);
+  it("should create diagnostic settings", async () => {
+    const result = await client.diagnosticSettings.createOrUpdate(
+      "/subscriptions/.../resourceGroups/.../providers/Microsoft.Compute/virtualMachines/exampleVm",
+      diagnosticName,
+      {
+        workspaceId: "/subscriptions/.../resourceGroups/.../providers/Microsoft.OperationalInsights/workspaces/example",
+        logs: [],
+        metrics: [],
+      },
+    );
+
+    assert.ok(result);
   });
 });
 ```
+
+For more recorder patterns, inspect existing `test/public` folders in `sdk/*/*` packages and the shared recorder documentation under `sdk/test-utils/recorder/`.

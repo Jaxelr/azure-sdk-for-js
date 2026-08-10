@@ -1,123 +1,125 @@
-Getting Started: Generate JS SDK with TypeSpec
-===========================================================================
+# Generate JavaScript SDKs from TypeSpec
 
+This guide describes the supported local workflows for generating JavaScript/TypeScript SDKs from TypeSpec definitions.
 
-# Before you Start
+## Before you start
 
-[TypeScript Azure SDK Design Guidelines](https://azure.github.io/azure-sdk/typescript_introduction.html) is the overall design guideline of the client SDK.
+Review the [TypeScript Azure SDK design guidelines](https://azure.github.io/azure-sdk/typescript_design.html) before changing generated client libraries.
 
-## Prerequisites
+### Prerequisites
 
-- [LTS versions of Node.js](https://github.com/nodejs/release#release-schedule)
-- [Git](https://git-scm.com/downloads)
-- Local Clone of Rest API Spec Repo Fork
-  - If you don't already have a fork, [Fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo#forking-a-repository) the [Rest API Spec Repo](https://github.com/Azure/azure-rest-api-specs).
-  - Clone your fork of the repo.
-    ```
-      git clone https://github.com/{YOUR_GITHUB_USERNAME}/azure-rest-api-specs.git
-    ```
-- Local Clone of JS Language Repo Fork
-  - If you don't already have a fork, [Fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo#forking-a-repository) the [JS Repo](https://github.com/Azure/azure-sdk-for-js).
-  - Clone your fork of the repo.
+- Node.js 22 or later
+- `pnpm` installed via the [pnpm installation instructions](https://pnpm.io/installation)
+- A local clone of your `azure-rest-api-specs` fork
+- A local clone of your `azure-sdk-for-js` fork
+- `pnpm install` already run in `azure-sdk-for-js`
 
-    ```
-      git clone https://github.com/{YOUR_GITHUB_USERNAME}/azure-sdk-for-js.git
-    ```
+## Generate SDKs from TypeSpec in `azure-rest-api-specs`
 
+It is recommended to keep the TypeSpec project in [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs). For service-side setup, see the [TypeSpec getting started guide](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/Getting-started-with-TypeSpec-specifications.md).
 
-# Generate SDK
+### Configure `tspconfig.yaml`
 
-## Use TypeSpec defined in REST API specifications
+Use one of these examples as references:
 
-It is recommended to configure TypeSpec package on [REST API specifications](https://github.com/Azure/azure-rest-api-specs). Please refer to [these guidelines](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/Getting-started-with-TypeSpec-specifications.md).
+- [Modular client example](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.Management/tspconfig.yaml)
+- [RLC example](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml)
 
-### How to configure tspconfig.yaml
-You can reference these two config files to configure the Modular or RLC package:
-- [Modular tspconfig.yaml](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.Management/tspconfig.yaml)
-- [RLC tspconfig.yaml](https://github.com/Azure/azure-rest-api-specs/blob/main/specification/contosowidgetmanager/Contoso.WidgetManager/tspconfig.yaml)
+Verify these settings carefully:
 
-Please make sure `service-dir`, `emitter-output-dir`, `package-details`, `flavor`(for typespec-ts) is correctly configured. `experimental-extensible-enums` is the optional config.The `is-modular-library` option is true by default, if you want to generate RLC libraries for data-plane SDKs, you must add `is-modular-library: false` in your tspconfig.yaml.
+- `parameters.service-dir.default` should be the service folder under `sdk/`
+- `options.@azure-tools/typespec-ts.emitter-output-dir` should point at `sdk/<service>/<package>`
+- `package-details` should match the intended npm package
+- `flavor` should be configured appropriately when required by `@azure-tools/typespec-ts`
+- `is-modular-library: false` is required for RLC generation
 
-- "parameters.service-dir.default" would be `sdk/<service>`
-- "options.@azure-tools/typespec-ts.emitter-output-dir" would be `{output-dir}/{service-dir}/<module>`
+Generated SDK code lands under `sdk/<service>/<package>` in this repo.
 
-SDK module would be generated under the SDK project folder at `sdk/<service>/<module>`.
+## Recommended workflow: `code-gen-pipeline`
 
-### Generate Code with code-gen-pipeline tool (recommend)
-**Notice** These steps are to generate code using the local spec repo. If you want to generate code with the github url, please refer [Generate Code with tsp-client tool](#generate-code-with-tsp-client-tool)
+If you are generating from a local specs checkout, prefer the release-tools pipeline command instead of calling `tsp-client` directly.
 
-Install dependencies to use code-gen-pipeline,  
-```ps
-npm --prefix eng/common/tsp-client ci
-npm install -g pnpm
-npm --prefix eng/tools/js-sdk-release-tools ci
+Install the required tool dependencies:
+
+```bash
+npm ci --prefix eng/common/tsp-client
+npm ci --prefix eng/tools/js-sdk-release-tools
 ```
 
-Create a local json file named generatedInput.json with content similar to that shown below
-```
-  {
-    "dryRun": false,
-    "specFolder": <your-local-spec-repo-path>,
-    "headSha": <commit-id-you-want-to-generate-from>,
-    "repoHttpsUrl": "https://github.com/Azure/azure-rest-api-specs",
-    "relatedTypeSpecProjectFolder": [
+Create a local `generatedInput.json` file such as:
+
+```json
+{
+  "dryRun": false,
+  "specFolder": "<path-to-local-spec-repo>",
+  "headSha": "<spec-commit-sha>",
+  "repoHttpsUrl": "https://github.com/Azure/azure-rest-api-specs",
+  "relatedTypeSpecProjectFolder": [
     "specification/SERVICE_DIRECTORY_NAME/PACKAGE_DIRECTORY_NAME/"
-    ]
-  }
+  ]
+}
 ```
 
-Run the command
-```
-npm --prefix eng/tools/js-sdk-release-tools exec --no -- code-gen-pipeline --inputJsonPath=<path-to-generatedInput.json> --outputJsonPath=<path-to-generatedOutput.json> --typespecEmitter=@azure-tools/typespec-ts --local
-```
+Run the pipeline tool:
 
-> path-to-generatedOutput.json is the detailed information of generated package, you can ignore it without pipeline. [generateOutput.json](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/GenerateOutputSchema.json) is to show us the location of generated artifact and any other messages.
-
-This command will automatically:
-1. Generate package code with TypeSpec.
-2. Build the package.
-3. Generate and run tests (optional, with warnings displayed if they fail).
-4. Generate samples, if enabled.
-5. Create or update the `CHANGELOG.md`.
-6. Bump the version according to the Azure SDK for JS policy.
-7. Generate or update `ci.mgmt.yml` or `ci.yml` (if the package is new).
-
-
-After all the steps finished, you can prepare the release for this generation. See [Prepare Release](#prepare-release)
-
-### Generate Code with tsp-client tool
-> To reduce workload and unnecessary mistakes, it is recommended to use the simple method from the previous section. Only if you are clear about what you are doing and the method from the previous section does not meet your needs, should you consider using the method below.
-
-Install `tsp-client` CLI tool
-
-```ps
-npm --prefix eng/common/tsp-client ci
+```bash
+npm exec --prefix eng/tools/js-sdk-release-tools --no -- code-gen-pipeline --inputJsonPath=<path-to-generatedInput.json> --outputJsonPath=<path-to-generatedOutput.json> --typespecEmitter=@azure-tools/typespec-ts --local
 ```
 
-For initial set up, from the root of the SDK repo, call
+This workflow can:
 
+1. Generate package code from TypeSpec
+2. Build the package
+3. Generate and optionally run tests
+4. Generate samples when enabled
+5. Create or update `CHANGELOG.md`
+6. Bump the package version according to repo policy
+7. Create or update `ci.yml` / `ci.mgmt.yml` for new packages
+
+After generation, continue with [steps after generation](./steps-after-generations.md).
+
+## Direct workflow: `tsp-client`
+
+Use `tsp-client` directly only when you need more granular control.
+
+Install the pinned CLI package first:
+
+```bash
+npm ci --prefix eng/common/tsp-client
 ```
-npm --prefix eng/common/tsp-client exec --no -- tsp-client init -c <url-to-tspconfig>
+
+### Initialize a new SDK
+
+From the root of the `azure-sdk-for-js` repo, run:
+
+```bash
+npm exec --prefix eng/common/tsp-client --no -- tsp-client init --tsp-config <url-to-tspconfig>
 ```
 
-For updating TypeSpec generated SDK, call below in the SDK module folder (`sdk/<service>/<module>`) where `tsp-location.yaml` exists
+### Update an existing SDK
 
-```ps
-npm --prefix ../../../eng/common/tsp-client exec --no -- tsp-client update
+For an existing package, run the command from the package directory that contains `tsp-location.yaml`:
+
+```bash
+npm exec --prefix ../../../eng/common/tsp-client --no -- tsp-client update
 ```
 
-**Notice**
-If you use tsp-client to generate code and your generated SDK is new, you need to do one extra thing:
+If you use `tsp-client` directly for a brand-new package, you must still handle the follow-up repo work yourself, including CI configuration and the post-generation cleanup described in [steps after generation](./steps-after-generations.md).
 
+## Build and validate the generated package
 
-**1**: You should add `ci.yml` or `ci.mgmt.yml` under `sdk/<service>/<module`. `ci.yml` is for `Data Plane SDKs` and `ci.mgmt.yml` is for `Mgmt Plane SDKs`. See [Create/Update the ci.yaml](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#createupdate-the-ciyaml)
+After code generation:
 
-#### Build
+```bash
+pnpm turbo build --filter=<package-name>... --token 1
+```
 
-See [steps-after-generations](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md).
+Then run the package checks that match CI for the affected package, typically from the package directory:
 
-After all the steps finished, you can prepare the release PullRequest for this generation. See [Prepare Release](#prepare-release)
+```bash
+npx dev-tool check --tag=local
+```
 
-## Prepare Release
+## Prepare release work
 
-Prepare your SDK for release. The necessary approvals, guidance for testing, documentation, and release pipelines is described in your release plan. More information about the Azure SDK Release Tool is [here](https://eng.ms/docs/products/azure-developer-experience/plan/release-plan).
+Release approval, testing, and publishing guidance live in the release plan workflow. See the Azure SDK release tooling documentation referenced from your service team's process.

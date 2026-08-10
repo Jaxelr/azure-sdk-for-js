@@ -1,100 +1,69 @@
-# Dependency Management
+# Dependency management
 
-The Azure SDK for JS client libraries include a host of dependencies, both internal and external. In general, our policy allows for some flexibility in dependencies and we generally pin to a [caret] version - allowing for patches, security fixes, and any non-breaking changes in our dependency ranges.
+This repository uses `pnpm` workspaces plus the version catalogs defined in `pnpm-workspace.yaml`.
 
-There are times when a dependency needs to be updated, such as when a security vulnerability has been found and patched in the dependency's codebase. While we will address security vulnerabilities in dependencies by updating our minimum version to the latest patched version, our SemVer policy allows customers to update to the latest version of a transitive dependency without waiting for our next releases and without requiring a hotfix.
+For contributor workflows inside `azure-sdk-for-js`, prefer the dependency guidance in [CONTRIBUTING.md](https://github.com/Azure/azure-sdk-for-js/blob/main/CONTRIBUTING.md#installing-and-managing-dependencies). This document focuses on dependency policy and on application-level transitive dependency updates.
 
-In this document we'll outline a few options available to you when a transitive dependency must be updated.
+> **SDK authors:** for the policy on taking a new third-party runtime dependency in a shipped library, see [Adding a new third-party runtime dependency](./steps-after-generations.md#adding-a-new-third-party-runtime-dependency).
 
-> **SDK authors:** for the policy on taking a _new_ third-party runtime
-> dependency in a shipped library, see
-> [Adding a new third-party runtime dependency](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#adding-a-new-third-party-runtime-dependency).
+## Repo dependency rules
 
-## Example scenario
+- Use `pnpm`, not `npm install`, for workspace package changes in this repo.
+- Prefer existing catalog entries in `pnpm-workspace.yaml` when adding or updating shared dependencies.
+- Use `workspace:` ranges for local first-party packages when appropriate.
+- Commit `pnpm-lock.yaml` changes when dependency changes require them.
 
-Let's assume that a vulnerability has been found in [node-fetch] version 2.6.6 and that you use `@azure/keyvault-keys` directly. Your security scan identified this vulnerability and asks to upgrade to 2.6.7 or higher.
+## Example scenario: updating a transitive dependency in an application
 
-The outputs below assume you're using `npm v8.1.2` with a lockfile, but we will provide instructions for Yarn as well.
+Sometimes a consuming application, not this repo, needs to move a transitive dependency forward because of a security advisory or bug fix.
 
-### Identifying the dependency tree
+As an example, suppose your app depends on `@azure/keyvault-keys` and a scanner flags an older transitive version of `node-fetch`.
 
-First, let's see how `node-fetch` is pulled into our dependency tree.
+### Identify the dependency tree
 
+```text
+npm ls node-fetch
 ```
-> npm ls node-fetch
 
-keyvault@1.0.0 /home/user/my-app
-└─┬ @azure/keyvault-keys@4.3.0
-  └─┬ @azure/core-http@2.2.3
+Example output from an application might look like:
+
+```text
+my-app@1.0.0 /home/user/my-app
+└─┬ @azure/keyvault-keys@4.10.0
+  └─┬ <transitive dependency chain>
     └── node-fetch@2.6.6
 ```
 
-> If you are using Yarn you can use `yarn why node-fetch` with similar results.
+The exact tree changes over time; the important step is to inspect your application's installed graph rather than assuming a specific Azure SDK internal package layout.
 
-It looks like `node-fetch`, a dependency of `@azure/core-http@2.2.3` is being pulled in _transitively_ via `@azure/keyvault-keys@4.3.0`.
+### Use `npm audit fix` in the consuming app
 
-Because I use a lockfile, running `npm install` again will not help me here. But `npm` provides a few utilities that can.
+If `npm audit` reported the issue and the update is semver-compatible, try:
 
-### Using `npm audit fix`
-
-First, it's possible that you were alerted to a security vulnerability thanks to `npm audit`. In this case, the simplest solution might be to run `npm audit fix`. Let's see what that looks like:
-
-```
-> npm audit fix
-
-changed 1 package, and audited 51 packages in 421ms
-
-2 packages are looking for funding
-  run `npm fund` for details
-
-found 0 vulnerabilities
-keyvault main % npm ls node-fetch
-keyvault@1.0.0 /home/user/my-app
-└─┬ @azure/keyvault-keys@4.3.0
-  └─┬ @azure/core-http@2.2.3
-    └── node-fetch@2.6.7
+```text
+npm audit fix
 ```
 
-As you can see node-fetch has been updated to 2.6.7, without having to wait for a new version of `@azure/core-http`.
+### Use `npm update` in the consuming app
 
-For more information on `npm audit` please refer to the [npm-audit documentation][npm-audit].
+For non-security cases, you can often refresh the resolved version with:
 
-> If you are using Yarn you can use `yarn npm audit` with similar results.
-
-### Using `npm update`
-
-Not all updates are due to security vulnerabilities. Sometimes you just want to update a transitive dependency without deleting your lockfile. In that case, `npm update node-fetch` can help. Let's see what that looks like:
-
-```
-> npm update node-fetch
-
-changed 1 package, and audited 51 packages in 320ms
-
-2 packages are looking for funding
-  run `npm fund` for details
-
-found 0 vulnerabilities
-keyvault main % npm ls node-fetch
-keyvault@1.0.0 /home/user/my-app
-└─┬ @azure/keyvault-keys@4.3.0
-  └─┬ @azure/core-http@2.2.3
-    └── node-fetch@2.6.7
+```text
+npm update node-fetch
 ```
 
-Awesome!
+Both commands apply to the consuming application's own lockfile, not to the `azure-sdk-for-js` workspace.
 
-> If you are using Yarn you can use `yarn up node-fetch` with similar results.
+## Updating dependencies inside this repo
 
-> Note: In some previous versions of `npm`, `npm update` would only update _top-level_ dependencies. If you're using npm 6.x for example you can provide the `--depth` argument to achieve similar results.
+When you need to update a dependency for an SDK package in this repo:
 
-For more information on `npm update` please refer to the [npm-update documentation][npm-update].
+1. Check whether the dependency already exists in `pnpm-workspace.yaml` under `catalog` or `catalogs`.
+2. From the package directory, use `pnpm add <package>` or `pnpm add -D <package>` when the dependency should be managed normally by pnpm.
+3. If the dependency should use a shared catalog version, set the package entry to `catalog:` (or the named catalog such as `catalog:testing`) as appropriate.
+4. Run `pnpm install` from the repo root.
+5. Validate the affected package with its normal checks.
 
-### I read this guide and still have no idea what to do
+## Need help?
 
-Feel free to [file an issue][file-an-issue] and start a discussion, we're here to help and will try to do so to the best of our abilities!
-
-[caret]: https://docs.npmjs.com/cli/v6/using-npm/semver#caret-ranges-123-025-004
-[node-fetch]: https://www.npmjs.com/package/node-fetch
-[npm-audit]: https://docs.npmjs.com/cli/v8/commands/npm-audit
-[npm-update]: https://docs.npmjs.com/cli/v8/commands/npm-update
-[file-an-issue]: https://github.com/Azure/azure-sdk-for-js/issues/new/choose
+If you are unsure how to update a dependency range or catalog entry in this repo, open an issue or ask the JavaScript SDK maintainers before introducing a one-off version that fights the workspace configuration.
