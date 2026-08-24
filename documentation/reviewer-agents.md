@@ -70,8 +70,7 @@ not duplicate findings from other agents.
 
 ## Using Agents Locally in VS Code
 
-The same agents are available as **custom agents** in VS Code Copilot Chat
-(via Copilot CLI). Their definitions live in `.github/agents/*.agent.md`.
+The same agents are available as **custom agents** in VS Code Copilot Chat. Their definitions live in `.github/agents/*.agent.md`.
 
 ### Prerequisites
 
@@ -133,7 +132,7 @@ In the Copilot Chat panel, use the `@` prefix to summon an agent by name:
 - You can ask an agent to review specific files, a git diff, or the entire
   branch.
 - Agents follow the detailed guidance and references in `.github/prompts/`.
-- Agents respect the same scoping rules as in CI: they ignore `src/generated/`,
+- Agents respect the same scoping rules as in CI: they ignore generated code under `generated/` or `src/generated/`,
   `snippets.spec.ts`, formatting issues, and domains outside their expertise.
 
 ## Agent Configuration

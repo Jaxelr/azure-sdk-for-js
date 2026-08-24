@@ -46,11 +46,12 @@ SDK module would be generated under the SDK project folder at `sdk/<service>/<mo
 ### Generate Code with code-gen-pipeline tool (recommend)
 **Notice** These steps are to generate code using the local spec repo. If you want to generate code with the github url, please refer [Generate Code with tsp-client tool](#generate-code-with-tsp-client-tool)
 
-Install dependencies to use `tsp-client`,  
+Install the pinned dependencies used by `tsp-client` from the repo root:
 ```ps
 npm --prefix eng/common/tsp-client ci
-npm install -g pnpm
 ```
+
+Install `pnpm` by following the official [pnpm installation instructions](https://pnpm.io/installation) if it is not already available.
 
 Then run `tsp-client` from the repo root against your TypeSpec configuration URL:
 
@@ -94,7 +95,7 @@ npm exec --prefix ../../../eng/common/tsp-client --no -- tsp-client update
 If you use tsp-client to generate code and your generated SDK is new, you need to do one extra thing:
 
 
-**1**: You should add `ci.yml` or `ci.mgmt.yml` under `sdk/<service>/<module`. `ci.yml` is for `Data Plane SDKs` and `ci.mgmt.yml` is for `Mgmt Plane SDKs`. See [Create/Update the ci.yaml](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#createupdate-the-ciyaml)
+**1**: You should add `ci.yml` or `ci.mgmt.yml` under `sdk/<service>/<module>`. `ci.yml` is for data-plane SDKs and `ci.mgmt.yml` is for management-plane SDKs. See [Create/Update the ci.yaml](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#createupdate-the-ciyaml).
 
 #### Build
 
