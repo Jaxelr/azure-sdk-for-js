@@ -107,6 +107,14 @@ async function privateCloudsCreateOrUpdate(resourceGroupName: string, privateClo
     properties: {
       networkBlock: "192.168.48.0/22",
       managementCluster: { clusterSize: 4 },
+      vcfLicense: {
+        kind: "vcf5",
+        licenseKey: "12345-12345-12345-12345-12345",
+        endDate: new Date("2025-12-31T23:59:59Z"),
+        cores: 16,
+        broadcomSiteId: "123456",
+        broadcomContractNumber: "123456",
+      },
     },
     tags: {},
   });

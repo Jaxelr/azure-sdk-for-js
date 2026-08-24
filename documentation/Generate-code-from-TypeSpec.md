@@ -46,41 +46,25 @@ SDK module would be generated under the SDK project folder at `sdk/<service>/<mo
 ### Generate Code with code-gen-pipeline tool (recommend)
 **Notice** These steps are to generate code using the local spec repo. If you want to generate code with the github url, please refer [Generate Code with tsp-client tool](#generate-code-with-tsp-client-tool)
 
-Install dependencies to use code-gen-pipeline,  
+Install dependencies to use `tsp-client`,  
 ```ps
 npm --prefix eng/common/tsp-client ci
 npm install -g pnpm
-npm --prefix eng/tools/js-sdk-release-tools ci
 ```
 
-Create a local json file named generatedInput.json with content similar to that shown below
+Then run `tsp-client` from the repo root against your TypeSpec configuration URL:
+
 ```
-  {
-    "dryRun": false,
-    "specFolder": <your-local-spec-repo-path>,
-    "headSha": <commit-id-you-want-to-generate-from>,
-    "repoHttpsUrl": "https://github.com/Azure/azure-rest-api-specs",
-    "relatedTypeSpecProjectFolder": [
-    "specification/SERVICE_DIRECTORY_NAME/PACKAGE_DIRECTORY_NAME/"
-    ]
-  }
+npm exec --prefix eng/common/tsp-client --no -- tsp-client init --tsp-config <url-to-tspconfig>
 ```
 
-Run the command
-```
-npm --prefix eng/tools/js-sdk-release-tools exec --no -- code-gen-pipeline --inputJsonPath=<path-to-generatedInput.json> --outputJsonPath=<path-to-generatedOutput.json> --typespecEmitter=@azure-tools/typespec-ts --local
+For an existing package with `tsp-location.yaml`, regenerate from the package directory with:
+
+```ps
+npm exec --prefix ../../../eng/common/tsp-client --no -- tsp-client update
 ```
 
-> path-to-generatedOutput.json is the detailed information of generated package, you can ignore it without pipeline. [generateOutput.json](https://github.com/Azure/azure-rest-api-specs/blob/main/documentation/sdkautomation/GenerateOutputSchema.json) is to show us the location of generated artifact and any other messages.
-
-This command will automatically:
-1. Generate package code with TypeSpec.
-2. Build the package.
-3. Generate and run tests (optional, with warnings displayed if they fail).
-4. Generate samples, if enabled.
-5. Create or update the `CHANGELOG.md`.
-6. Bump the version according to the Azure SDK for JS policy.
-7. Generate or update `ci.mgmt.yml` or `ci.yml` (if the package is new).
+Unlike the older release automation described in previous revisions of this document, local generation does **not** automatically update changelogs, bump versions, or create CI YAML files for you. Follow `documentation/steps-after-generations.md` for those post-generation tasks.
 
 
 After all the steps finished, you can prepare the release for this generation. See [Prepare Release](#prepare-release)
@@ -97,13 +81,13 @@ npm --prefix eng/common/tsp-client ci
 For initial set up, from the root of the SDK repo, call
 
 ```
-npm --prefix eng/common/tsp-client exec --no -- tsp-client init -c <url-to-tspconfig>
+npm exec --prefix eng/common/tsp-client --no -- tsp-client init --tsp-config <url-to-tspconfig>
 ```
 
 For updating TypeSpec generated SDK, call below in the SDK module folder (`sdk/<service>/<module>`) where `tsp-location.yaml` exists
 
 ```ps
-npm --prefix ../../../eng/common/tsp-client exec --no -- tsp-client update
+npm exec --prefix ../../../eng/common/tsp-client --no -- tsp-client update
 ```
 
 **Notice**
