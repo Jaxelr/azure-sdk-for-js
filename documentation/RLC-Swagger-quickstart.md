@@ -92,7 +92,6 @@ We are working on to automatically generate everything right now, but currently,
 
     We enable the samples generation by default, this may fail the generation due to the example quality or codegen issue. You could turn this option off by `generate-sample: false` to non-block your process.
 
-    **After the first generation, you need to switch `generate-metadata: false` as we have some manual changes in this file and don't want them get overwritten by generated ones.**
 
     ---
 
@@ -110,7 +109,7 @@ We are working on to automatically generate everything right now, but currently,
 
     ```shell
     pnpm install
-    pnpm turbo build --filter=<your-package-name>...
+    pnpm turbo build --filter=<your-package-name>... --token 1
     cd <your-sdk-folder>
     pnpm pack
     ```
@@ -155,14 +154,14 @@ See the [JavaScript Codegen Quick Start for Test](https://github.com/Azure/azure
     On Linux, you could use `export` to set env variable:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}...
+    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
     export TEST_MODE=record && pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
     On Windows, you could use `SET`:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}...
+    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
     SET TEST_MODE=record&& pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
@@ -171,14 +170,14 @@ See the [JavaScript Codegen Quick Start for Test](https://github.com/Azure/azure
     On Linux, you could use below commands:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}...
+    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
     export TEST_MODE=playback && pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
     On Windows, you can use:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}...
+    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
     SET TEST_MODE=playback&& pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
@@ -265,7 +264,7 @@ Now, we can use the exact same steps to build an releasable artifact.
 
 ```shell
 pnpm install
-pnpm turbo build --filter=<your-package-name>...
+pnpm turbo build --filter=<your-package-name>... --token 1
 cd <your-sdk-folder>
 export TEST_MODE=record && pnpm test
 pnpm pack
@@ -322,7 +321,7 @@ The codegen can only help you generate SDK code, there is something you need to 
 
 ## CHANGELOG.md
 
-CHANGELOG can help customers know the change of new version quickly, so you need to update it according to the change of this new version. It is also necessary to update release date like `1.0.0-beta.1 (2022-11-11)` (rough time is fine and no need to be very accurate).
+CHANGELOG can help customers know the change of new version quickly, so you need to update it according to the change of this new version. The current repository convention is that the top entry remains `(Unreleased)` until the release is published; do not pre-fill a release date in advance.
 
 ## Version Number
 

@@ -31,13 +31,13 @@ Before starting the migration, ensure you have:
 
 ### Step 1: Install Required Tools
 
-Install the TypeSpec client generator CLI globally:
+Install the pinned `tsp-client` dependencies used by this repo:
 
 ```bash
-npm install -g @azure-tools/typespec-client-generator-cli
+npm ci --prefix eng/common/tsp-client
 ```
 
-For more information on tsp-client, see the [TypeSpec Client Generator CLI documentation](https://aka.ms/azsdk/tsp-client)
+Then run `tsp-client` through `npm exec --prefix eng/common/tsp-client --no -- ...`. For more information, see `eng/common/tsp-client/README.md`.
 
 ### Step 2: Add TypeSpec Configuration
 
@@ -100,9 +100,9 @@ Replace your AutoRest generation script with TypeSpec generation and customizati
 ```json
 {
   "scripts": {
-    "generate:client": "tsp-client update -d && npm run format && dev-tool customization apply --skip index.ts",
-    "build": "npm run clean && dev-tool run build-package && dev-tool run extract-api",
-    "test": "npm run test:node && npm run test:browser",
+    "generate:client": "npm exec --prefix ../../../eng/common/tsp-client --no -- tsp-client update && pnpm format && dev-tool customization apply --skip index.ts",
+    "build": "pnpm run clean && dev-tool run build-package && dev-tool run extract-api",
+    "test": "pnpm run test:node && pnpm run test:browser",
     "test:node": "dev-tool run build-test --no-browser-test && dev-tool run test:vitest"
   }
 }
@@ -117,11 +117,11 @@ Update your `package.json` dependencies to use the new core packages:
 ```json
 {
   "dependencies": {
-    "@azure-rest/core-client": "^2.3.2",
-    "@azure/core-lro": "^3.1.0",
-    "@azure/core-paging": "^1.6.2",
-    "@azure/core-rest-pipeline": "^1.19.0",
-    "@azure/core-util": "^1.11.0"
+    "@azure-rest/core-client": "workspace:^",
+    "@azure/core-lro": "workspace:^",
+    "@azure/core-paging": "workspace:^",
+    "@azure/core-rest-pipeline": "workspace:^",
+    "@azure/core-util": "workspace:^"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -140,7 +140,7 @@ Run the TypeSpec client generation:
 
 ```bash
 cd sdk/your-service/your-package
-npm run generate:client
+pnpm generate:client
 ```
 
 ### Step 7: Apply Customizations
@@ -230,20 +230,20 @@ Delete the following files that are no longer needed:
 
 - `swagger/README.md` (or similar AutoRest configuration)
 - Any custom AutoRest configuration files
-- The old `src/generated/` directory
+- Any old AutoRest-generated helper directories that are no longer used after migration
 
 ### Step 11: Test and Validate
 
 1. **Generate and apply customizations:**
 
    ```bash
-   npm run generate:client
+   pnpm generate:client
    ```
 
 2. **Build the package:**
 
    ```bash
-   pnpm turbo build
+   pnpm turbo build --filter=@azure/your-package... --token 1
    ```
 
 3. **Run tests:**
@@ -268,8 +268,8 @@ Delete the following files that are no longer needed:
 After migration, your development workflow becomes:
 
 1. **Update TypeSpec definitions** in azure-rest-api-specs
-2. **Generate new code:** `npm run generate:client`
-3. **Build and test:** `pnpm turbo build && pnpm test`
+2. **Generate new code:** `pnpm generate:client`
+3. **Build and test:** `pnpm turbo build --filter=@azure/your-package... --token 1 && pnpm test`
 
 ### Version Management
 

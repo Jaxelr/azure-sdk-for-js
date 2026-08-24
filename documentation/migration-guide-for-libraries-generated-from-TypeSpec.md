@@ -19,10 +19,9 @@ Several packages generated from *TypeSpec* have already reached General Availabi
 
 We recommend reviewing the [complete guide](https://devblogs.microsoft.com/azure-sdk/azure-sdk-modularized-libraries-for-javascript/) for full details. Compared to libraries generated with *Autorest*, *TypeSpec code generation* has following key benefits:
 
-1. Subpath exports: Libraries now leverage [subpath exports](https://nodejs.org/api/packages.html#subpath-exports)(introduced in Node.js version 12.7) to provide layered APIs. This means developer can access the familiar `Client` at the root level while also using the `/api` subpath for fine-grained, operation-level imports.
-1. Bundle size optimization: By leveraging the new `/api` subpath export, developers can selectively import only the operations they need. This approach minimizes the overall library footprint in the application bundle, ensuring that only the required pieces are included.
-1. Long-running operations: Based on customer feedback, we simplified the API to make it cleaner and more ergonomic. Previously, clients exposed two methods for each *long-running operation* (`beginDoSth` and `beginDoSthAndWait`), which often felt redundant and confusing. Libraries generated from *TypeSpec* now provide a single method (`doSth`) that supports both async and sync usage, reducing complexity while improving developer experience.
-
+1. Subpath exports: Libraries now leverage [subpath exports](https://nodejs.org/api/packages.html#subpath-exports) (introduced in Node.js version 12.7) to provide layered APIs. This means developers can access the familiar `Client` at the root level while also using the `/api` subpath for fine-grained, operation-level imports.
+2. Bundle size optimization: By leveraging the new `/api` subpath export, developers can selectively import only the operations they need. This approach minimizes the overall library footprint in the application bundle, ensuring that only the required pieces are included.
+3. Long-running operations: Based on customer feedback, the generated API is simpler. Previously, clients exposed two methods for each *long-running operation* (`beginDoSth` and `beginDoSthAndWait`). Libraries generated from *TypeSpec* now expose a single LRO entrypoint (for example, `doSth`) that returns a poller you can either await directly or drive manually.
 
 ## How to migrate to libraries generated from TypeSpec
 
@@ -33,128 +32,95 @@ If you’re updating an existing application from **libraries generated with Aut
 
 ### Long-running Operations (LROs)
 
-Based on customer feedback, we simplified LROs to make the API **cleaner and more ergonomic**. Three changes matter for migration:
+Based on customer feedback, LROs were simplified to make the API **cleaner and more ergonomic**. Two changes matter most for migration:
 
 - **Method shape**: two methods → one method  
-- **Poller type**: `SimplePollerLike` → `PollerLike` (Promise‑like)  
-- **Rehydration**: option‑based → helper function
-#### Method signature changes
-Previously (libraries generated with **AutoRest**), each LRO exposed two methods (e.g., `beginStart` and `beginStartAndWait`).  
-Now (libraries generated from **TypeSpec**), there’s a **single** method that behaves as a poller **and** can be directly awaited.
+- **Polling flow**: direct await is supported on the returned poller  
 
-**AutoRest‑generated (previous)**  
+#### Method signature changes
+
+Previously (libraries generated with **AutoRest**), each LRO exposed two methods (for example, `beginStart` and `beginStartAndWait`).  
+Now (libraries generated from **TypeSpec**), there’s a **single** method that returns the poller.
+
+**AutoRest-generated (previous)**
+
 ```ts
 beginStart(
-    options?: IntegrationRuntimesStartOptionalParams,
-  ): Promise<
-    SimplePollerLike<
-      OperationState<IntegrationRuntimesStartResponse>,
-      IntegrationRuntimesStartResponse
-    >
-  >;
+  options?: IntegrationRuntimesStartOptionalParams,
+): Promise<
+  SimplePollerLike<
+    OperationState<IntegrationRuntimesStartResponse>,
+    IntegrationRuntimesStartResponse
+  >
+>;
 beginStartAndWait(
-    options?: IntegrationRuntimesStartOptionalParams,
-  ): Promise<IntegrationRuntimesStartResponse>;
+  options?: IntegrationRuntimesStartOptionalParams,
+): Promise<IntegrationRuntimesStartResponse>;
 ```
-**TypeSpec‑generated (current)**
+
+**TypeSpec-generated (current)**
 
 ```ts
-start(options?: IntegrationRuntimesStartOptionalParams): PollerLike<
-      OperationState<IntegrationRuntimesStartResponse>,
-      IntegrationRuntimesStartResponse
-    >;
+start(
+  options?: IntegrationRuntimesStartOptionalParams,
+): PollerLike<OperationState<IntegrationRuntimesStartResponse>, IntegrationRuntimesStartResponse>;
 ```
+
 **Migrate your usage**
+
 ```ts
 // Before (AutoRest-generated)
-const result = await beginStartAndWait();
+const result = await client.beginStartAndWait();
 
-const poller = await beginStart();
+const poller = await client.beginStart();
 const result2 = await poller.pollUntilDone();
 
 // After (TypeSpec-generated)
-const result = await start();           // awaiting returns the final result
+const result = await client.start();
 
-const poller = start();                 // direct access to the poller
-await poller.submitted();               // optional: await initial submission
-const result2 = await poller;           // or: await poller.pollUntilDone()
+const poller = client.start();
+const result2 = await poller.pollUntilDone();
 ```
 
-#### Poller type: `SimplePollerLike` → `PollerLike`
+> `PollerLike` returned by these libraries is promise-like, so `await client.start()` resolves to the final result.
 
-TypeSpec‑generated LROs return a `PollerLike`, which is also **Promise‑like**.
+#### Poller behavior differences
 
-| Capability                                  | AutoRest (`SimplePollerLike`) | TypeSpec (`PollerLike`) |
-|---------------------------------------------|-------------------------------|-------------------------|
-| Return final results                        | `pollUntilDone()`             | `pollUntilDone()`       |
-| Poll                                        | `poll()`                      | `poll()`                |
-| Observe progress                            | `onProgress()`                | `onProgress()`          |
-| Check completion                            | `getOperationState().isCompleted`/`isDone()` | `isDone`               |
-| Stop / check stopped                        | `stopPolling()` / `isStopped()` | N/A                   |
-| Read current state                          | `getOperationState()`         | `operationState`        |
-| Access final result                         | `getResult()`                 | `result`                |
-| Serialize poller state                      | `toString()`                  | `serialize()`           |
-| Await initial submission                    | N/A                           | `submitted()`           |
+| Capability | AutoRest (`SimplePollerLike`) | TypeSpec (`PollerLike`) |
+|---|---|---|
+| Get the final result | `beginXxxAndWait()` or `pollUntilDone()` | `await client.xxx()` or `pollUntilDone()` |
+| Poll manually | `poll()` | `poll()` |
+| Observe progress | `onProgress()` | `onProgress()` |
+| Check completion | `getOperationState().isCompleted` | `getOperationState().isCompleted` |
+| Serialize state for resume | `toString()` | `toString()` |
 
-> **Note:** `getOperationState(): TState` becomes the property `operationState?: TState`. Guard for `undefined` before access:
-
-```ts
-// Before
-const status = poller.getOperationState().status;
-
-// Now
-const status = poller?.operationState?.status;
-```
-
-**Serialization change**
-```ts
-// Before
-const serialized = poller.toString();
-
-// Now
-const serialized = await poller.serialize();
-```
-#### Rehydration (restoring a poller)
-
-Rehydration moved from an operation option (`resumeFrom`) to a **client‑level helper**.
-
-**Before → After**
-```ts
-// Before (AutoRest-generated)
-const result = await client.beginStartAndWait({ resumeFrom: serializedState });
-
-// After (TypeSpec-generated)
-const result = await restorePoller(client, serializedState, client.start);
-```
-For more detail, see the core‑lro migration guide:  
-https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/core/core-lro/docs/MIGRATION.md
-
----
+For more detail, see the core-lro migration guide:  
+<https://github.com/Azure/azure-sdk-for-js/blob/main/sdk/core/core-lro/docs/MIGRATION.md>
 
 #### Quick migration checklist
 
-- Replace `beginXxxAndWait()` → `await xxx()`.  
-- Replace `await beginXxx()` → `const poller = xxx()`.  
-- Replace `poller.toString()` → `await poller.serialize()`.  
-- Replace `poller.getOperationState()` → `poller.operationState` (guard for `undefined`).  
-- If you previously used `resumeFrom`, switch to `restorePoller(client, serialized, client.xxx)`.  
-- If you depended on `stopPolling()`/`isStopped()`, revisit your control flow (these are not exposed on `PollerLike`).
+- Replace `client.beginXxxAndWait()` → `await client.xxx()`.  
+- Replace `const poller = await client.beginXxx()` → `const poller = client.xxx()`.  
+- Continue using `await poller.pollUntilDone()` when you need manual poller access.  
+- If you serialize pollers for later resume, follow the package-specific migration notes and the `core-lro` migration guide.  
 
----
 ### List operations (paging)
+
 Paging has been simplified in libraries generated from TypeSpec. Two main changes:
 
 - **Removed unsupported `maxpagesize`**  
 - **Replaced `getContinuationToken` helper with direct `continuationToken` property**
 
-
 #### `maxpagesize` removed
+
 The `maxpagesize` setting was never supported in AutoRest-generated clients, so it has been removed from `PageSettings`. No behavioral impact is expected.
 
 #### Continuation token access simplified
+
 Previously, you needed a helper function to extract the continuation token:
 
-**AutoRest-generated (previous)**  
+**AutoRest-generated (previous)**
+
 ```ts
 const firstPage = await iter.byPage().next();
 const continuationToken = getContinuationToken(firstPage);
@@ -162,13 +128,9 @@ const continuationToken = getContinuationToken(firstPage);
 
 Now, the token is exposed directly on the page object:
 
-**TypeSpec-generated (current)**  
-```ts
-export type ContinuablePage<TElement, TPage = TElement[]> = TPage & {
-  /** Token to continue iteration */
-  continuationToken?: string;
-};
+**TypeSpec-generated (current)**
 
+```ts
 const firstPage = await iter.byPage().next();
 const continuationToken = firstPage.value.continuationToken;
 ```

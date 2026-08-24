@@ -9,7 +9,7 @@ After this finishes, you will see the generated code in `src` folder in your **{
 
 ```shell
 pnpm install
-pnpm turbo build --filter=<your-package-name>...
+pnpm turbo build --filter=<your-package-name>... --token 1
 ```
 
 # Customizing the generated code
@@ -23,14 +23,10 @@ Install `js-sdk-release-tools`
 npm --prefix eng/tools/js-sdk-release-tools ci
 ```
 
-After you build your package, run
-```
-npm --prefix eng/tools/js-sdk-release-tools exec --no -- changelog-tool <your-package-path>
-```
-Here is the example
-```
-npm --prefix eng/tools/js-sdk-release-tools exec --no -- changelog-tool sdk/advisor/arm-advisor
-```
+This tool package currently exists only to pin dependencies used by release automation. There is no checked-in local `changelog-tool` CLI in this repo. To update changelog/version/package metadata after generation, use the supported package workflows instead:
+
+- `npx dev-tool package increment-version` from the package directory to bump the version and add a new changelog entry.
+- Follow the package-specific release plan workflow for final release notes and publishing.
 
 # Improve README.md document
 
@@ -60,14 +56,14 @@ See the [Javascript Codegen Quick Start for Test](https://github.com/Azure/azure
     On Linux, you could use `export` to set env variable:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}...
+    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
     export TEST_MODE=record && pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
     On Windows, you could use `SET`:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}...
+    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
     SET TEST_MODE=record&& pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
@@ -76,13 +72,13 @@ See the [Javascript Codegen Quick Start for Test](https://github.com/Azure/azure
     On Linux, you could use below commands:
 
     ```shell
-      pnpm turbo build --filter=${PACKAGE_NAME}...
+      pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
     export TEST_MODE=playback && pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
     On Windows, you can use:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}...
+    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
     SET TEST_MODE=playback&& pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
@@ -194,7 +190,7 @@ Now, we can use the exact same steps to build a releasable artifact.
 
 ```shell
 pnpm install
-pnpm turbo build --filter=<your-package-name>...
+pnpm turbo build --filter=<your-package-name>... --token 1
 cd <your-sdk-folder>
 export TEST_MODE=record && pnpm test
 pnpm pack
@@ -249,11 +245,11 @@ Please notice the Artifacts `name` should align with your package name. Here, th
 
 # Prepare PR
 
-TypeScript emitter can only help you generate SDK code, there is something you need to update manually.
+TypeSpec emitter can only help you generate SDK code, there is something you need to update manually.
 
 ## CHANGELOG.md
 
-CHANGELOG can help customers know the change of new version quickly, so you need to update it according to the change of this new version. It is also necessary to update release date like `1.0.0-beta.1 (2022-11-11)` (rough time is fine and no need to be very accurate).
+CHANGELOG can help customers know the change of new version quickly, so you need to update it according to the change of this new version. The current repository convention is that the top entry remains `(<Unreleased>)` until the release is published; do not pre-fill a release date in advance.
 
 ## Version Number
 

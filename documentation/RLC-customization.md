@@ -2,7 +2,7 @@
 
 ## Generate RLC Client
 
-Follow [quickstart](https://aka.ms/azsdk/rlc/js) to generate the rest-level client from OpenAPI specs.
+Follow the [RLC TypeSpec quickstart](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/RLC-quickstart.md) to generate a rest-level client from TypeSpec, or [RLC Swagger quickstart](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/RLC-Swagger-quickstart.md) if you are still generating from OpenAPI specs.
 
 It's advised to put the generated code into the folder `generated`, add your customization code under the folder `src` and then export or re-export them as needed.
 

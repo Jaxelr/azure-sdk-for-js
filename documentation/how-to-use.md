@@ -1,89 +1,94 @@
 # How to Use the Azure SDK for JavaScript
 
-In this document, we will give a brief introduction on how to use the JavaScript SDK for new users.
+This document gives a brief introduction for new users.
 
 1. Prepare your environment.  
-    NodeJS: can be installed from https://nodejs.org/en/download/  
-    typescript: install it with `npm install -g typescript`.
+   - Install [Node.js LTS](https://nodejs.org/en/download/).  
+   - Install TypeScript if you want to compile `.ts` files directly: `npm install -g typescript`.
 
-1. Create a empty folder and `cd` this folder.
-
-    ```
-    mkdir jstest
-    cd jstest
-    ```
-
-1. Initialize a new node project. 
-
-    ```
-    npm init
-    ```
-
-    This step will create a `package.json` file in current folder.
-
-1. Install dependencies.
+2. Create an empty folder and `cd` into it.
 
    ```
-   // install @azure/identity, you can use @azure/identity to do the authentication work.
+   mkdir jstest
+   cd jstest
+   ```
+
+3. Initialize a new Node project.
+
+   ```
+   npm init -y
+   ```
+
+   This step creates a `package.json` file in the current folder.
+
+4. Install dependencies.
+
+   ```
    npm install @azure/identity
-   
-   // Then install your target try out package, you can install the latest published with
    npm install @azure/arm-XXX
-
-   // or install it from your local JS SDK artifact file. 
-   npm install D:\\dev\\test\\test-compute\\azure-arm-XXX-1.0.0.tgz   
    ```
 
-   In the case of verifying the unpublished packages, you may download the artifact from either rest api specs CI pipeline or from the release request issue that we provided.
-
-1. Create a ts file (free name and copy follow code into this file), eg: `test_1.ts`.
-   Eg:
-
-    ```ts
-        import { DefaultAzureCredential } from "@azure/identity";
-        import{ TargetManagementClient } from "@azure/arm-target";
-
-        const subscriptionId = process.env.SUBSCRIPTION_ID || '';
-        const credentials=new DefaultAzureCredential();
-
-        async function test() {
-            const client = new TargetManagementClient(credentials, subscriptionId);
-            const result = await client.operations.list();
-            // you can test that you need test operation
-            console.log("The result is:\n");
-            console.log(result);
-        }
-
-        test();
-    ```
-
-    In the example, we only add `client.operations.list()`, you may change them into other resources CRUD function per your need.  
-    Eg:
-
-    ```ts
-    const client = new ComputeManagementClient(credentials, subscriptionID);
-    const result= await client.galleries.beginCreateOrUpdateAndWait(resourceGroupName, galleryName, gallery);
-    const result= await client.galleryImages.begincreateOrUpdateAndWait(resourceGroupName, galleryName, galleryImageName, galleryImage);
-    ```
-    
-1. Install all the dependencies
+   Or install an unpublished package from a local artifact file:
 
    ```
-   npm install // need to make sure package.json exists and has contained at step 4.
+   npm install D:\\dev\\test\\test-compute\\azure-arm-XXX-1.0.0.tgz
    ```
 
-1. Compile the ts file.
+   If you are validating an unpublished package, you can download the artifact from the relevant CI pipeline or release workflow.
+
+5. Create a TypeScript file, for example `test_1.ts`.
+
+   ```ts
+   import { DefaultAzureCredential } from "@azure/identity";
+   import { TargetManagementClient } from "@azure/arm-target";
+
+   const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID || "";
+   const credential = new DefaultAzureCredential();
+
+   async function test() {
+     const client = new TargetManagementClient(credential, subscriptionId);
+     const result = [];
+
+     for await (const item of client.operations.list()) {
+       result.push(item);
+     }
+
+     console.log("The result is:\n");
+     console.log(result);
+   }
+
+   test();
+   ```
+
+   In this example we call `client.operations.list()`. You can replace that with resource CRUD operations for your scenario, for example:
+
+   ```ts
+   const client = new ComputeManagementClient(credential, subscriptionId);
+   const result = await client.galleries.beginCreateOrUpdateAndWait(
+     resourceGroupName,
+     galleryName,
+     gallery,
+   );
+   ```
+
+6. Install all dependencies if you have changed `package.json`.
+
+   ```
+   npm install
+   ```
+
+7. Compile the TypeScript file.
 
    ```
    tsc test_1.ts
    ```
 
-   it will generate a `test_1.js` file in current folder.
+   This generates `test_1.js`.
 
-1. Run the code. 
-   
+8. Run the code.
+
    ```
    node test_1.js
    ```
-   
-   Now, you can see expected response.
+
+Now you can see the response.
