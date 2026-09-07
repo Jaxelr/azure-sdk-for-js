@@ -110,7 +110,7 @@ npm --prefix ../../../eng/common/tsp-client exec --no -- tsp-client update
 If you use tsp-client to generate code and your generated SDK is new, you need to do one extra thing:
 
 
-**1**: You should add `ci.yml` or `ci.mgmt.yml` under `sdk/<service>/<module`. `ci.yml` is for `Data Plane SDKs` and `ci.mgmt.yml` is for `Mgmt Plane SDKs`. See [Create/Update the ci.yaml](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#createupdate-the-ciyaml)
+**1**: You should add `ci.yml` or `ci.mgmt.yml` under `sdk/<service>/<module>`. `ci.yml` is for `Data Plane SDKs` and `ci.mgmt.yml` is for `Mgmt Plane SDKs`. See [Create/Update the ci.yaml](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/steps-after-generations.md#createupdate-the-ciyaml)
 
 #### Build
 
