@@ -285,10 +285,10 @@ import {
   MyServiceClient,
 } from "@azure-rest/my-service";
 
-const adminClient = MyServiceAdministrationClient.createClient(endpoint, credential);
+const adminClient = MyServiceAdministrationClient(endpoint, credential);
 // call any admin operation
 const createdResponse = await adminClient.createResource(`<parameter>`);
-const serviceClient = MyServiceClient.createClient(endpoint, credential);
+const serviceClient = MyServiceClient(endpoint, credential);
 // call any non-admin operation
 const listedResponse = await serviceClient.listItems(`<parameter>`);
 ```

@@ -31,13 +31,13 @@ Before starting the migration, ensure you have:
 
 ### Step 1: Install Required Tools
 
-Install the TypeSpec client generator CLI globally:
+Install the TypeSpec client generator CLI dependencies (pinned locally for reproducible builds):
 
 ```bash
-npm install -g @azure-tools/typespec-client-generator-cli
+npm ci --prefix eng/common/tsp-client
 ```
 
-For more information on tsp-client, see the [TypeSpec Client Generator CLI documentation](https://aka.ms/azsdk/tsp-client)
+For more information on tsp-client, see the [TypeSpec Client Generator CLI documentation](https://aka.ms/azsdk/tsp-client) and [eng/common/tsp-client/README.md](https://github.com/Azure/azure-sdk-for-js/blob/main/eng/common/tsp-client/README.md).
 
 ### Step 2: Add TypeSpec Configuration
 
