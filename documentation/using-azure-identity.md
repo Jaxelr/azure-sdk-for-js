@@ -97,7 +97,7 @@ credential for your application:
     - If so, use the `AuthorizationCodeCredential` or
       `InteractiveBrowserCredential`
 
-    - If not, use the `DeviceCodeCredential`
+    - If not, use the `DeviceCodeCredential` in Node.js or another non-browser environment
 
 ## Permissions and Consent
 
@@ -271,7 +271,7 @@ To use this credential successfully, your app registration will need to be
 configured with a redirect URI in the **Redirect URIs** section of the
 **Authentication** page.
 
-For browser-based apps, check both the **Access tokens** and **ID tokens** options under **Implicit grant**, and set `redirectUri` to match your app's redirect URI.
+For browser-based apps, configure a **Single-page application** redirect URI and set `redirectUri` to match it. The browser flow uses authorization code flow with PKCE rather than implicit grant.
 
 For Node.js apps, configure a "Mobile and desktop applications" redirect URI (see https://learn.microsoft.com/entra/identity-platform/scenario-desktop-app-registration#redirect-uris). The `redirectUri` option is not required in Node.js unless you need to override the default.
 

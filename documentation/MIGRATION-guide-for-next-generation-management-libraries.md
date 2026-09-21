@@ -118,7 +118,7 @@ You may change it into a promise based
 const callback = function handle(...args) {
   // callback function body
 };
-getInstanceView(resourceGroupName, cloudServiceName).then(...(args) => handle(...args));
+getInstanceView(resourceGroupName, cloudServiceName).then(callback);
 ```
 
 ## List Operations
@@ -283,8 +283,8 @@ const poller = await computeClient.dedicatedHosts.beginCreateOrUpdate(
   parameter
 );
 poller.onProgress((state) => {
-  console.log(`Are we done yet? ${Boolean(state.isCompleted)});
-})
+  console.log(`Are we done yet? ${Boolean(state.isCompleted)}`);
+});
 const result = await poller.pollUntilDone().then((response) => {
   console.log(response);
 });
@@ -316,11 +316,13 @@ await computeClient.dedicatedHosts
     <td>
       <pre lang="typescript">
 const computeClient = new compute.ComputeManagementClient(credential, subscriptionId);
-await computeClient.dedicatedHosts
-  .beginCreateOrUpdateAndWait(resourceGroupName, hostGroupName, hostName, parameter)
-  .then((response) => {
-    console.log(response);
-  });
+const result = await computeClient.dedicatedHosts.beginCreateOrUpdateAndWait(
+  resourceGroupName,
+  hostGroupName,
+  hostName,
+  parameter
+);
+console.log(result);
       </pre>
     </td>
   </tr>
