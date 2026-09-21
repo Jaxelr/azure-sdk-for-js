@@ -261,7 +261,7 @@ You should stage and commit the `assets.json` update as part of your PR. If you 
 
 #### Find local recording files
 
-You can find your recording files in `./azure-sdk-for-js/.assets`
+You can find your recording files in `./.assets`
 
 If you want to search your recording quickly, you can open `.breadcrumb` file and search your package in which folder.
 

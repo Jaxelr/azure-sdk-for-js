@@ -15,7 +15,7 @@ const client = ExampleClient("https://example.org/", new DefaultAzureCredential(
 // Send a GET request to https://example.org/hello
 const response = await client.path("/hello").get();
 
-if(response.status !== "200") {
+if (response.status !== 200) {
   throw response.body.error;
 }
 
