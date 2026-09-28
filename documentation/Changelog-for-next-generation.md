@@ -6,8 +6,8 @@ The next-generation Azure JavaScript libraries introduce a few important changes
 1. Callbacks: Method overloads that use callbacks have been removed and please use Promise instead. You may find out the examples [here](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/MIGRATION-guide-for-next-generation-management-libraries.md#callbacks)  
 1. List operations now return an iterable result that follows the `PagedAsyncIterableIterator` interface as opposite to the previous model where you have to make a new request using the link to the next page. You may find out the new list examples [here](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/MIGRATION-guide-for-next-generation-management-libraries.md#list-operations) 
 1. Interface and API change for Long running operations: To check the final result of the Poller object returned by long running operations like `beginCreateOrUpdate`, please use `pollUntilDone` instead of `pollUntilFinished`. To get the final result directly, use the method with the suffix `AndWait` e.g.`beginCreateOrUpdateAndWait`. You may find out the LRO examples [here](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/MIGRATION-guide-for-next-generation-management-libraries.md#long-running-operations)  
-1. The ClientContext class has been removed and all its properties could be found in Client class itself.  
-1. The SDK only supports ECMAScript 2015 (ES6) and beyond, all projects that referenced this SDK should be upgraded to use ES6.  
+1. The ClientContext class is no longer part of the SDK.
+1. The SDK targets modern ECMAScript environments; follow the current package engine requirements when configuring your project.
 
 #### Tips:  
 1. **For more details on how to migrate the next-generation libraries, please visit the [migration guide](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/MIGRATION-guide-for-next-generation-management-libraries.md).**  
