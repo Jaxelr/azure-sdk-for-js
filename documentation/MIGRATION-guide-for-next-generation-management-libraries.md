@@ -118,7 +118,7 @@ You may change it into a promise based
 const callback = function handle(...args) {
   // callback function body
 };
-getInstanceView(resourceGroupName, cloudServiceName).then(...(args) => handle(...args));
+getInstanceView(resourceGroupName, cloudServiceName).then((...args) => handle(...args));
 ```
 
 ## List Operations
@@ -143,8 +143,8 @@ The newly added `PagedAsyncIterableIterator` also allows you to get these items 
 
 ```typescript
 const result = client.availabilitySets.list(this.resourceName);
-for await (const item of result.byPage({ maxPageSize: 2 })) {
-  handle(item);
+for await (const page of result.byPage({ maxPageSize: 2 })) {
+  handle(page);
 }
 ```
 
@@ -267,7 +267,7 @@ const poller = await computeClient.dedicatedHosts.beginCreateOrUpdate(
   hostName,
   parameter
 );
-console.log(`The current status? ${poller.getPollState().state"}`)
+console.log(`The current status? ${poller.getPollState().state}`);
 const result = await poller.pollUntilFinished().then((response) => {
   console.log(response);
 });
@@ -283,8 +283,8 @@ const poller = await computeClient.dedicatedHosts.beginCreateOrUpdate(
   parameter
 );
 poller.onProgress((state) => {
-  console.log(`Are we done yet? ${Boolean(state.isCompleted)});
-})
+  console.log(`Are we done yet? ${Boolean(state.isCompleted)}`);
+});
 const result = await poller.pollUntilDone().then((response) => {
   console.log(response);
 });
