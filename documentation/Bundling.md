@@ -181,7 +181,7 @@ In order to use Azure SDK libraries inside JS, you need to import code from the 
 
 ```js
 // src/index.js
-import { SomeClient } from "@azure/some-sdk-package";
+import { BlobServiceClient } from "@azure/storage-blob";
 // Now do something interesting with the client
 ```
 
@@ -191,7 +191,7 @@ Next we need to configure Rollup to take the above code and turn it into a bundl
 // rollup.config.mjs
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 export default {
-  input: "src/main.js",
+  input: "src/index.js",
   output: {
     file: "dist/bundle.js",
     format: "esm",

@@ -9,7 +9,7 @@ After this finishes, you will see the generated code in `src` folder in your **{
 
 ```shell
 pnpm install
-pnpm turbo build --filter=<your-package-name>... --token 1
+pnpm turbo build --filter=<your-package-name>...
 ```
 
 # Customizing the generated code
@@ -20,16 +20,16 @@ If the generated code does not fit your needs, you can use the JavaScript custom
 
 Install `js-sdk-release-tools`
 ```
-npm --prefix eng/tools/js-sdk-release-tools ci
+pnpm --dir eng/tools/js-sdk-release-tools install
 ```
 
 After you build your package, run
 ```
-npm --prefix eng/tools/js-sdk-release-tools exec --no -- changelog-tool <your-package-path>
+pnpm --dir eng/tools/js-sdk-release-tools exec changelog-tool <your-package-path>
 ```
 Here is the example
 ```
-npm --prefix eng/tools/js-sdk-release-tools exec --no -- changelog-tool sdk/advisor/arm-advisor
+pnpm --dir eng/tools/js-sdk-release-tools exec changelog-tool sdk/advisor/arm-advisor
 ```
 
 # Improve README.md document
@@ -60,14 +60,14 @@ See the [Javascript Codegen Quick Start for Test](https://github.com/Azure/azure
     On Linux, you could use `export` to set env variable:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
+    pnpm turbo build --filter=${PACKAGE_NAME}...
     export TEST_MODE=record && pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
     On Windows, you could use `SET`:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
+    pnpm turbo build --filter=${PACKAGE_NAME}...
     SET TEST_MODE=record&& pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
@@ -76,19 +76,19 @@ See the [Javascript Codegen Quick Start for Test](https://github.com/Azure/azure
     On Linux, you could use below commands:
 
     ```shell
-      pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
+      pnpm turbo build --filter=${PACKAGE_NAME}...
     export TEST_MODE=playback && pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
     On Windows, you can use:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
+    pnpm turbo build --filter=${PACKAGE_NAME}...
     SET TEST_MODE=playback&& pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
 # How to write samples
 
-We highly encourage you to write some valid samples for your customer to get start your service with libraries. You may author TypeScript samples under the `samples-dev` folder. For quick start, you can use [sample-dev template](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/template/template/samples-dev) as reference and update the relevant information for your service such as package-name, sample code, description, etc.
+We highly encourage you to write some valid samples for your customer to get start your service with libraries. You may author TypeScript samples under the `samples-dev` folder. For quick start, you can use [sample-dev template](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/template/samples-dev) as reference and update the relevant information for your service such as package-name, sample code, description, etc.
 
 To learn more, you could refer to the below samples:
 - DPG sample: [the samples of OpenAIClient](https://github.com/Azure/azure-sdk-for-js/tree/main/sdk/openai/openai/samples-dev)
@@ -99,7 +99,7 @@ After the `samples-dev` folder change is finished, you will need to change the `
 You will need to add this part to the `compilerOptions` of your `tsconfig.json` file so that the Samples engine could resolve the `sample-dev` package against the source code of the SDK.
 
 ``` json
-    "paths": { "@azure/agrifood-farming": ["./src/index"] }
+    "paths": { "@azure/<your-package-name>": ["./src/index"] }
 ```
 
 And change the *"include"* part to
@@ -194,7 +194,7 @@ Now, we can use the exact same steps to build a releasable artifact.
 
 ```shell
 pnpm install
-pnpm turbo build --filter=<your-package-name>... --token 1
+pnpm turbo build --filter=<your-package-name>...
 cd <your-sdk-folder>
 export TEST_MODE=record && pnpm test
 pnpm pack
@@ -218,7 +218,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - sdk/purview/
+      - <your-project-path>/
 pr:
   branches:
     include:
@@ -230,14 +230,14 @@ pr:
       - feature/v4
   paths:
     include:
-      - sdk/purview/
+      - <your-project-path>/
 extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
-    ServiceDirectory: purview
+    ServiceDirectory: <your-service-directory>
     Artifacts:
-      - name: azure-agrifood-farming # azure-agrifood-farming for DPG; azure-rest-agrifood-farming for RLC
-        safeName: azureagrifoodfarming # azureagrifoodfarming for DPG; azurerestagrifoodfarming for RLC
+      - name: <your-artifact-name>
+        safeName: <your-safe-name>
 ```
 
 Please change the `paths.include` value as your own project path, and change the Artifacts `name` and `safeName` into yours.
@@ -261,7 +261,7 @@ You shall update the version number according to [semantic versioning rule](http
 
 ## Test recordings
 
-After [writing and running test cases](#how-to-write-test-for-dpgrlc), you need to push the recordings to [assets repo](https://github.com/Azure/azure-sdk-assets). Please refer to [push recording guide](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md#how-to-push-test-recordings-to-assets-repo) to push recordings.
+After [writing and running test cases](#how-to-write-test-for-dpg-rlc-mpg), you need to push the recordings to [assets repo](https://github.com/Azure/azure-sdk-assets). Please refer to [push recording guide](https://github.com/Azure/azure-sdk-for-js/blob/main/documentation/Quickstart-on-how-to-write-tests.md#how-to-push-test-recordings-to-assets-repo) to push recordings.
 
 ## Fix CI for PR
 
@@ -274,7 +274,7 @@ Latest changes to the main branch may introduce merge conflicts of `pnpm-lock.ya
 1. checkout to main branch and pull the latest code
 2. checkout the PR's branch
 3. run `git merge main` 
-4. run `git checkout origin/main pnpm-lock.yaml` 
+4. run `git restore --source origin/main -- pnpm-lock.yaml`
 5. run `pnpm install`
 6. push your changes into your PR
 
