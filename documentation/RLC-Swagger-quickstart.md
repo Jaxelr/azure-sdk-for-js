@@ -110,7 +110,7 @@ We are working on to automatically generate everything right now, but currently,
 
     ```shell
     pnpm install
-    pnpm turbo build --filter=<your-package-name>... --token 1
+    pnpm turbo build --filter=<your-package-name>...
     cd <your-sdk-folder>
     pnpm pack
     ```
@@ -155,14 +155,14 @@ See the [JavaScript Codegen Quick Start for Test](https://github.com/Azure/azure
     On Linux, you could use `export` to set env variable:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
+    pnpm turbo build --filter=${PACKAGE_NAME}...
     export TEST_MODE=record && pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
     On Windows, you could use `SET`:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
+    pnpm turbo build --filter=${PACKAGE_NAME}...
     SET TEST_MODE=record&& pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
@@ -171,14 +171,14 @@ See the [JavaScript Codegen Quick Start for Test](https://github.com/Azure/azure
     On Linux, you could use below commands:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
+    pnpm turbo build --filter=${PACKAGE_NAME}...
     export TEST_MODE=playback && pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
     On Windows, you can use:
 
     ```shell
-    pnpm turbo build --filter=${PACKAGE_NAME}... --token 1
+    pnpm turbo build --filter=${PACKAGE_NAME}...
     SET TEST_MODE=playback&& pnpm test # this will run live test and generate a recordings folder, you will need to submit it in the PR.
     ```
 
@@ -265,7 +265,7 @@ Now, we can use the exact same steps to build an releasable artifact.
 
 ```shell
 pnpm install
-pnpm turbo build --filter=<your-package-name>... --token 1
+pnpm turbo build --filter=<your-package-name>...
 cd <your-sdk-folder>
 export TEST_MODE=record && pnpm test
 pnpm pack
@@ -288,7 +288,7 @@ trigger:
       - hotfix/*
   paths:
     include:
-      - sdk/purview/
+      - <your-project-path>/
 pr:
   branches:
     include:
@@ -300,14 +300,14 @@ pr:
       - feature/v4
   paths:
     include:
-      - sdk/purview/
+      - <your-project-path>/
 extends:
   template: ../../eng/pipelines/templates/stages/archetype-sdk-client.yml
   parameters:
-    ServiceDirectory: purview
+    ServiceDirectory: <your-service-directory>
     Artifacts:
-      - name: azure-rest-agrifood-farming
-        safeName: azurerestagrifoodfarming
+      - name: <your-artifact-name>
+        safeName: <your-safe-name>
 ```
 
 Please change the `paths.include` value as your own project path, and change the Artifacts `name` and `safeName` into yours.

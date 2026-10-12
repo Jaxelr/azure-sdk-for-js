@@ -39,13 +39,13 @@ These values can be obtained from the portal. You could follow the [instructions
 As an example, to install the latest Azure VMware Solution module, you would run:
 
 ```sh
-npm i @azure/arm-avs@latest
+pnpm add @azure/arm-avs@latest
 ```
 
 We also recommend installing the authentication package:
 
 ```sh
-npm i @azure/identity
+pnpm add @azure/identity
 ```
 
 ## Authentication
