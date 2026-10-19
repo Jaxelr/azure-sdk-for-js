@@ -401,7 +401,7 @@ describe("My test", () => {
       },
     });
     if (isUnexpected(glossaryResponse)) {
-      throw new Error(glossaryResponse.body?.error.message);
+      throw new Error(glossaryResponse.body?.error?.message ?? "Request failed");
     }
     // Step 5: Add your assertions
     assert.strictEqual(glossaryResponse.status, "200");
