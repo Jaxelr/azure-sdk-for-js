@@ -79,7 +79,7 @@ The `path` function takes a string as the first parameter and accepts any path d
 import ExampleClient from "@azure-rest/example-client";
 import { DefaultAzureCredential } from "@azure/identity";
 
-const client = ExampleClient ("https://example.org/", new DefaultAzureCredential());
+const client = ExampleClient("https://example.org/", new DefaultAzureCredential());
 // {name} is detected as a path parameter, so the path function gets a required parameter
 const response = await client.path("/hello/{name}", "Brian").get();
 
@@ -98,7 +98,7 @@ The main difference with `path` is that `pathUnchecked` doesn't have strongly ty
 import ExampleClient from "@azure-rest/example-client";
 import { DefaultAzureCredential } from "@azure/identity";
 
-const client = ExampleClient ("https://example.org/", new DefaultAzureCredential());
+const client = ExampleClient("https://example.org/", new DefaultAzureCredential());
 const response = await client.pathUnchecked("/newPath/{resourceName}", "greeter").head();
 
 // response.headers is not strongly typed
@@ -114,7 +114,7 @@ Our REST clients have types to help users auto-complete the `paths` and build re
 import ExampleClient from "@azure-rest/example-client";
 import { DefaultAzureCredential } from "@azure/identity";
 
-const client = ExampleClient ("https://example.org/", new DefaultAzureCredential());
+const client = ExampleClient("https://example.org/", new DefaultAzureCredential());
 
 // This REST client has a type defined for the body property that '/hello' takes when 
 // calling a post. This way you get help from intellisense to find out which properties
@@ -150,7 +150,7 @@ Responses are also strongly typed based on the `path`
 import ExampleClient from "@azure-rest/example-client";
 import { DefaultAzureCredential } from "@azure/identity";
 
-const client = ExampleClient ("https://example.org/", new DefaultAzureCredential());
+const client = ExampleClient("https://example.org/", new DefaultAzureCredential());
 const response = await client.pathUnchecked("/hello/{name}", "Brian").get();
 
 if (response.status !== "200") {
